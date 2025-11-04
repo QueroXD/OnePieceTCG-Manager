@@ -51,7 +51,7 @@
             this.economiaToolStripMenuItem});
             this.menu.Location = new System.Drawing.Point(0, 0);
             this.menu.Name = "menu";
-            this.menu.Size = new System.Drawing.Size(800, 30);
+            this.menu.Size = new System.Drawing.Size(800, 28);
             this.menu.TabIndex = 0;
             this.menu.Text = "menu";
             // 
@@ -61,7 +61,7 @@
             this.testConexiónToolStripMenuItem,
             this.salirToolStripMenuItem});
             this.ajustesToolStripMenuItem.Name = "ajustesToolStripMenuItem";
-            this.ajustesToolStripMenuItem.Size = new System.Drawing.Size(70, 26);
+            this.ajustesToolStripMenuItem.Size = new System.Drawing.Size(70, 24);
             this.ajustesToolStripMenuItem.Text = "Ajustes";
             // 
             // testConexiónToolStripMenuItem
@@ -82,7 +82,7 @@
             this.verStockToolStripMenuItem,
             this.añadirStockToolStripMenuItem});
             this.gestiónToolStripMenuItem.Name = "gestiónToolStripMenuItem";
-            this.gestiónToolStripMenuItem.Size = new System.Drawing.Size(73, 26);
+            this.gestiónToolStripMenuItem.Size = new System.Drawing.Size(73, 24);
             this.gestiónToolStripMenuItem.Text = "Gestión";
             // 
             // verStockToolStripMenuItem
@@ -96,6 +96,7 @@
             this.añadirStockToolStripMenuItem.Name = "añadirStockToolStripMenuItem";
             this.añadirStockToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
             this.añadirStockToolStripMenuItem.Text = "Añadir Stock";
+            this.añadirStockToolStripMenuItem.Click += new System.EventHandler(this.añadirStockToolStripMenuItem_Click);
             // 
             // economiaToolStripMenuItem
             // 
@@ -103,19 +104,19 @@
             this.ingresosEstimadosToolStripMenuItem,
             this.ingresosGanadosToolStripMenuItem});
             this.economiaToolStripMenuItem.Name = "economiaToolStripMenuItem";
-            this.economiaToolStripMenuItem.Size = new System.Drawing.Size(89, 26);
+            this.economiaToolStripMenuItem.Size = new System.Drawing.Size(89, 24);
             this.economiaToolStripMenuItem.Text = "Economia";
             // 
             // ingresosEstimadosToolStripMenuItem
             // 
             this.ingresosEstimadosToolStripMenuItem.Name = "ingresosEstimadosToolStripMenuItem";
-            this.ingresosEstimadosToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
+            this.ingresosEstimadosToolStripMenuItem.Size = new System.Drawing.Size(219, 26);
             this.ingresosEstimadosToolStripMenuItem.Text = "Ingresos estimados";
             // 
             // ingresosGanadosToolStripMenuItem
             // 
             this.ingresosGanadosToolStripMenuItem.Name = "ingresosGanadosToolStripMenuItem";
-            this.ingresosGanadosToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
+            this.ingresosGanadosToolStripMenuItem.Size = new System.Drawing.Size(219, 26);
             this.ingresosGanadosToolStripMenuItem.Text = "Ingresos Ganados";
             // 
             // FrmMain
