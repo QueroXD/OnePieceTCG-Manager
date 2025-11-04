@@ -53,12 +53,14 @@ namespace OnePieceTCG_Manager.Gestion
 
                     // Muestra los valores en los inputs
                     inputCardName.Text = selectedCard.card_name;
-                    //inputSet.Text = selectedCard.set_name;
+                    inputSet.Text = selectedCard.set_name;
                     inputRarity.Text = selectedCard.rarity;
                     inputColor.Text = selectedCard.card_color;
                     inputCardType.Text = selectedCard.card_type;
+                    inputCardSubType.Text = selectedCard.sub_types;
                     inputPower.Text = selectedCard.card_power;
                     inputCost.Text = selectedCard.card_cost;
+                    inputLifes.Text = selectedCard.life ?? "-";
                     //inputAttribute.Text = selectedCard.attribute;
                     inputCounter.Text = selectedCard.counter_amount?.ToString() ?? "";
                     inputDescription.Text = selectedCard.card_text;

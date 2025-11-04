@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.fotoCard = new System.Windows.Forms.PictureBox();
             this.lblCardID = new System.Windows.Forms.Label();
             this.inputCardID = new System.Windows.Forms.TextBox();
             this.inputCardName = new System.Windows.Forms.TextBox();
@@ -53,19 +52,11 @@
             this.inputCounter = new System.Windows.Forms.TextBox();
             this.inputDescription = new System.Windows.Forms.RichTextBox();
             this.lblDescription = new System.Windows.Forms.Label();
+            this.fotoCard = new System.Windows.Forms.PictureBox();
+            this.inputSet = new System.Windows.Forms.TextBox();
+            this.lblSet = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.fotoCard)).BeginInit();
             this.SuspendLayout();
-            // 
-            // fotoCard
-            // 
-            this.fotoCard.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.fotoCard.Location = new System.Drawing.Point(634, 13);
-            this.fotoCard.Margin = new System.Windows.Forms.Padding(5);
-            this.fotoCard.Name = "fotoCard";
-            this.fotoCard.Size = new System.Drawing.Size(300, 419);
-            this.fotoCard.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.fotoCard.TabIndex = 0;
-            this.fotoCard.TabStop = false;
             // 
             // lblCardID
             // 
@@ -86,9 +77,10 @@
             // 
             // inputCardName
             // 
-            this.inputCardName.Location = new System.Drawing.Point(175, 73);
+            this.inputCardName.Enabled = false;
+            this.inputCardName.Location = new System.Drawing.Point(145, 73);
             this.inputCardName.Name = "inputCardName";
-            this.inputCardName.Size = new System.Drawing.Size(173, 32);
+            this.inputCardName.Size = new System.Drawing.Size(203, 32);
             this.inputCardName.TabIndex = 4;
             // 
             // lblCardName
@@ -123,9 +115,10 @@
             // 
             // inputCardType
             // 
-            this.inputCardType.Location = new System.Drawing.Point(175, 111);
+            this.inputCardType.Enabled = false;
+            this.inputCardType.Location = new System.Drawing.Point(145, 111);
             this.inputCardType.Name = "inputCardType";
-            this.inputCardType.Size = new System.Drawing.Size(173, 32);
+            this.inputCardType.Size = new System.Drawing.Size(203, 32);
             this.inputCardType.TabIndex = 8;
             // 
             // lblCardType
@@ -140,6 +133,7 @@
             // 
             // inputRarity
             // 
+            this.inputRarity.Enabled = false;
             this.inputRarity.Location = new System.Drawing.Point(443, 73);
             this.inputRarity.Name = "inputRarity";
             this.inputRarity.Size = new System.Drawing.Size(42, 32);
@@ -157,6 +151,7 @@
             // 
             // inputCost
             // 
+            this.inputCost.Enabled = false;
             this.inputCost.Location = new System.Drawing.Point(443, 111);
             this.inputCost.Name = "inputCost";
             this.inputCost.Size = new System.Drawing.Size(42, 32);
@@ -174,6 +169,7 @@
             // 
             // inputLifes
             // 
+            this.inputLifes.Enabled = false;
             this.inputLifes.Location = new System.Drawing.Point(557, 75);
             this.inputLifes.Name = "inputLifes";
             this.inputLifes.Size = new System.Drawing.Size(42, 32);
@@ -191,6 +187,7 @@
             // 
             // inputCardSubType
             // 
+            this.inputCardSubType.Enabled = false;
             this.inputCardSubType.Location = new System.Drawing.Point(175, 150);
             this.inputCardSubType.Name = "inputCardSubType";
             this.inputCardSubType.Size = new System.Drawing.Size(424, 32);
@@ -208,6 +205,7 @@
             // 
             // inputColor
             // 
+            this.inputColor.Enabled = false;
             this.inputColor.Location = new System.Drawing.Point(86, 186);
             this.inputColor.Name = "inputColor";
             this.inputColor.Size = new System.Drawing.Size(116, 32);
@@ -225,11 +223,11 @@
             // 
             // inputPower
             // 
+            this.inputPower.Enabled = false;
             this.inputPower.Location = new System.Drawing.Point(290, 188);
             this.inputPower.Name = "inputPower";
             this.inputPower.Size = new System.Drawing.Size(82, 32);
             this.inputPower.TabIndex = 24;
-            this.inputPower.Text = "12000";
             // 
             // lblPower
             // 
@@ -253,15 +251,16 @@
             // 
             // inputCounter
             // 
+            this.inputCounter.Enabled = false;
             this.inputCounter.Location = new System.Drawing.Point(476, 190);
             this.inputCounter.Name = "inputCounter";
             this.inputCounter.Size = new System.Drawing.Size(82, 32);
             this.inputCounter.TabIndex = 26;
-            this.inputCounter.Text = "2000";
             // 
             // inputDescription
             // 
-            this.inputDescription.Location = new System.Drawing.Point(23, 262);
+            this.inputDescription.Enabled = false;
+            this.inputDescription.Location = new System.Drawing.Point(12, 299);
             this.inputDescription.Name = "inputDescription";
             this.inputDescription.Size = new System.Drawing.Size(597, 169);
             this.inputDescription.TabIndex = 27;
@@ -270,18 +269,49 @@
             // lblDescription
             // 
             this.lblDescription.AutoSize = true;
-            this.lblDescription.Location = new System.Drawing.Point(18, 234);
+            this.lblDescription.Location = new System.Drawing.Point(7, 271);
             this.lblDescription.Margin = new System.Windows.Forms.Padding(5, 0, 5, 0);
             this.lblDescription.Name = "lblDescription";
             this.lblDescription.Size = new System.Drawing.Size(141, 25);
             this.lblDescription.TabIndex = 28;
             this.lblDescription.Text = "Description: ";
             // 
+            // fotoCard
+            // 
+            this.fotoCard.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.fotoCard.Location = new System.Drawing.Point(647, 38);
+            this.fotoCard.Margin = new System.Windows.Forms.Padding(5);
+            this.fotoCard.Name = "fotoCard";
+            this.fotoCard.Size = new System.Drawing.Size(300, 419);
+            this.fotoCard.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.fotoCard.TabIndex = 0;
+            this.fotoCard.TabStop = false;
+            // 
+            // inputSet
+            // 
+            this.inputSet.Enabled = false;
+            this.inputSet.Location = new System.Drawing.Point(86, 224);
+            this.inputSet.Name = "inputSet";
+            this.inputSet.Size = new System.Drawing.Size(286, 32);
+            this.inputSet.TabIndex = 30;
+            // 
+            // lblSet
+            // 
+            this.lblSet.AutoSize = true;
+            this.lblSet.Location = new System.Drawing.Point(14, 224);
+            this.lblSet.Margin = new System.Windows.Forms.Padding(5, 0, 5, 0);
+            this.lblSet.Name = "lblSet";
+            this.lblSet.Size = new System.Drawing.Size(62, 25);
+            this.lblSet.TabIndex = 29;
+            this.lblSet.Text = "Set: ";
+            // 
             // FrmAddStock
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(13F, 25F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(940, 446);
+            this.ClientSize = new System.Drawing.Size(965, 488);
+            this.Controls.Add(this.inputSet);
+            this.Controls.Add(this.lblSet);
             this.Controls.Add(this.lblDescription);
             this.Controls.Add(this.inputDescription);
             this.Controls.Add(this.inputCounter);
@@ -346,5 +376,7 @@
         private System.Windows.Forms.TextBox inputCounter;
         private System.Windows.Forms.RichTextBox inputDescription;
         private System.Windows.Forms.Label lblDescription;
+        private System.Windows.Forms.TextBox inputSet;
+        private System.Windows.Forms.Label lblSet;
     }
 }

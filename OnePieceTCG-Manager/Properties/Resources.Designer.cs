@@ -59,15 +59,5 @@ namespace OnePieceTCG_Manager.Properties {
                 resourceCulture = value;
             }
         }
-        
-        /// <summary>
-        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap OP12_034_okj7ekL {
-            get {
-                object obj = ResourceManager.GetObject("OP12-034_okj7ekL", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
     }
 }
