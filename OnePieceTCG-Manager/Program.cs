@@ -16,7 +16,18 @@ namespace OnePieceTCG_Manager
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new FrmMain());
+            FrmLogin frmLogin = new FrmLogin();
+
+            // Si el login se valida, mostramos el main
+            if (frmLogin.ShowDialog() == DialogResult.OK)
+            {
+                Application.Run(new FrmMain());
+            }
+            else
+            {
+                // Si se cierra o falla el login, salir de la app
+                Application.Exit();
+            }
         }
     }
 }

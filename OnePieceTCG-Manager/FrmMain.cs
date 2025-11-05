@@ -13,8 +13,6 @@ namespace OnePieceTCG_Manager
 {
     public partial class FrmMain : Form
     {
-        FrmAddStock frmAddStock = new FrmAddStock();
-
         public FrmMain()
         {
             InitializeComponent();
@@ -35,5 +33,41 @@ namespace OnePieceTCG_Manager
             }
         }
 
+        private void testConexiónToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Probar la conexión a la base de datos
+            using (var context = new Data.OnePieceContext())
+            {
+                try
+                {
+                    context.Database.Connection.Open();
+                    MessageBox.Show("Conexión exitosa a la base de datos.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error al conectar a la base de datos: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+
+        private void verStockToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var frm = Application.OpenForms.OfType<FrmVerStock>().FirstOrDefault();
+
+            if (frm == null)
+            {
+                frm = new FrmVerStock { MdiParent = this };
+                frm.Show();
+            }
+            else
+            {
+                frm.BringToFront();
+            }
+        }
+        private void salirToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
     }
 }
