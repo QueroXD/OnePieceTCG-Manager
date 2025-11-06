@@ -84,6 +84,18 @@
     <Compile Include="Gestion\FrmVerStock.Designer.cs">
       <DependentUpon>FrmVerStock.cs</DependentUpon>
     </Compile>
+    <Compile Include="Gestion\Views\UC_StockGalleryView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Gestion\Views\UC_StockGalleryView.Designer.cs">
+      <DependentUpon>UC_StockGalleryView.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Gestion\Views\UC_StockListView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Gestion\Views\UC_StockListView.Designer.cs">
+      <DependentUpon>UC_StockListView.cs</DependentUpon>
+    </Compile>
     <Compile Include="Models\CardStock.cs" />
     <Compile Include="Models\Usuarios.cs" />
     <Compile Include="Program.cs" />

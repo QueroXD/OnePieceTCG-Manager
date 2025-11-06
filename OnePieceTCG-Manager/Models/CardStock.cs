@@ -26,5 +26,6 @@ namespace OnePieceTCG_Manager.Models
         public bool isAlter { get; set; }
         public string description { get; set; }
         public int units { get; set; }
+        public string cardImage { get; set; }
     }
 }

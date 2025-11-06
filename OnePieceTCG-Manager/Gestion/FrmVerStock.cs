@@ -1,7 +1,5 @@
-﻿using OnePieceTCG_Manager.Data;
+﻿using OnePieceTCG_Manager.Gestion.Views;
 using System;
-using System.Data;
-using System.Linq;
 using System.Windows.Forms;
 
 namespace OnePieceTCG_Manager.Gestion
@@ -15,51 +13,35 @@ namespace OnePieceTCG_Manager.Gestion
 
         private void FrmVerStock_Load(object sender, EventArgs e)
         {
-            LoadStockData();
+            ShowListView();
         }
 
-        private void LoadStockData()
+        private void toolListView_Click(object sender, EventArgs e)
         {
-            try
-            {
-                using (var db = new OnePieceContext())
-                {
-                    // Traer todos los registros de CardStock
-                    var stockList = db.CardStock
-                        .Select(c => new
-                        {
-                            ID = c.cardId,
-                            Nombre = c.cardName,
-                            Rareza = c.rarity,
-                            Tipo = c.type,
-                            Subtipo = c.subType,
-                            Atributo = c.attribute,
-                            Color = c.color,
-                            Coste = c.cost,
-                            Counter = c.counter,
-                            Poder = c.power,
-                            SetDesc = c.setDesc,
-                            Alter = c.isAlter,
-                            Descripción = c.description,
-                            Unidades = c.units
-                        })
-                        .ToList();
+            lblMode.Text = "Modo: Lista";
+            ShowListView();
+        }
 
-                    dataStock.DataSource = stockList;
-                }
+        private void toolGalleryView_Click(object sender, EventArgs e)
+        {
+            lblMode.Text = "Modo: Galería";
+            ShowGalleryView();
+        }
 
-                // Ajuste visual
-                dataStock.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-                dataStock.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-                dataStock.ReadOnly = true;
-                dataStock.AllowUserToAddRows = false;
-                dataStock.AllowUserToDeleteRows = false;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"❌ Error al cargar los datos del stock:\n{ex.Message}",
-                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+        private void ShowListView()
+        {
+            panelContainer.Controls.Clear();
+            var listView = new UC_StockListView();
+            listView.Dock = DockStyle.Fill;
+            panelContainer.Controls.Add(listView);
+        }
+
+        private void ShowGalleryView()
+        {
+            panelContainer.Controls.Clear();
+            var galleryView = new UC_StockGalleryView();
+            galleryView.Dock = DockStyle.Fill;
+            panelContainer.Controls.Add(galleryView);
         }
     }
 }

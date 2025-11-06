@@ -1,4 +1,6 @@
 ﻿using Newtonsoft.Json;
+using OnePieceTCG_Manager.Data;
+using OnePieceTCG_Manager.Models;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -15,19 +17,104 @@ namespace OnePieceTCG_Manager.Gestion
         public string CardQuery = "sets/card/";
         public string STQuery = "allSTCards/";
 
+        private bool _modoModificacion = false;
+        private string _currentCardId = null;
+
         public FrmAddStock()
         {
             InitializeComponent();
         }
 
-        private void FrmAddStock_Load(object sender, EventArgs e)
+        /// <summary>
+        /// Constructor para modo modificación o solo unidades.
+        /// </summary>
+        public FrmAddStock(string cardId, bool modoSoloUnidades = false)
         {
-            // Ocultar botones de Eliminar e Informacion
-            delButton.Visible = false;
-            infoButton.Visible = false;
-            confirmButton.Visible = false;
+            InitializeComponent();
+            _modoModificacion = true;
+            _currentCardId = cardId;
+
+            // Cargar datos desde la base local
+            LoadCardFromDB(cardId);
+
+            // Ajustar visibilidad de botones
+            addButton.Visible = false;
+            confirmButton.Visible = true;
+
+            if (modoSoloUnidades)
+            {
+                // Desactivar todos los controles excepto unidades y Confirmar
+                foreach (Control c in Controls)
+                    if (c.Name != "inputCantidad" && c.Name != "confirmButton")
+                        c.Enabled = false;
+            }
         }
 
+        private void FrmAddStock_Load(object sender, EventArgs e)
+        {
+            if (!_modoModificacion)
+            {
+                // En modo añadir: ocultar confirmButton
+                confirmButton.Visible = false;
+            }
+
+            // Ocultar botones innecesarios
+            delButton.Visible = false;
+            infoButton.Visible = false;
+        }
+
+        // 🔹 Carga los datos de la carta desde la base de datos local
+        private void LoadCardFromDB(string cardId)
+        {
+            try
+            {
+                using (var db = new OnePieceContext())
+                {
+                    var card = db.CardStock.Find(cardId);
+                    if (card == null)
+                    {
+                        MessageBox.Show("No se encontró la carta en la base de datos.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        Close();
+                        return;
+                    }
+
+                    // Cargar datos en los inputs
+                    inputCardID.Text = card.cardId;
+                    inputCardName.Text = card.cardName;
+                    inputRarity.Text = card.rarity;
+                    inputCardType.Text = card.type;
+                    inputCardSubType.Text = card.subType;
+                    inputAtributo.Text = card.attribute;
+                    inputColor.Text = card.color;
+                    inputCost.Text = card.cost.ToString();
+                    inputCounter.Text = card.counter.ToString();
+                    inputPower.Text = card.power.ToString();
+                    inputSet.Text = card.setDesc;
+                    inputDescription.Text = card.description;
+                    inputCantidad.Value = card.units;
+                    isAlter.Checked = card.isAlter;
+
+                    // Cargar imagen si existe ruta o URL
+                    if (!string.IsNullOrEmpty(card.cardId))
+                    {
+                        try
+                        {
+                            fotoCard.ImageLocation = card.cardImage;
+                        }
+                        catch
+                        {
+                            fotoCard.Image = null;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"❌ Error al cargar la carta desde la base de datos:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // 🔹 Botón Buscar (solo modo añadir)
         private async void btnSearch_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(inputCardID.Text))
@@ -37,16 +124,16 @@ namespace OnePieceTCG_Manager.Gestion
             }
 
             string cardId = inputCardID.Text.Trim();
-            await LoadCardDataAsync(cardId);
+            await LoadCardDataFromApiAsync(cardId);
         }
 
-        private async Task LoadCardDataAsync(string cardId)
+        // 🔹 Consulta la API solo cuando añadimos cartas nuevas
+        private async Task LoadCardDataFromApiAsync(string cardId)
         {
             using (HttpClient client = new HttpClient())
             {
                 try
                 {
-                    // 1️⃣ — Buscar primero en sets/card/{cardId}/
                     string url = $"{BaseURL}{CardQuery}{cardId}/";
                     HttpResponseMessage response = await client.GetAsync(url);
 
@@ -59,7 +146,6 @@ namespace OnePieceTCG_Manager.Gestion
                     }
                     else
                     {
-                        // 2️⃣ — Si no lo encuentra (por ejemplo, 404), buscar en allSTCards/
                         string stUrl = $"{BaseURL}{STQuery}";
                         var stResponse = await client.GetAsync(stUrl);
                         stResponse.EnsureSuccessStatusCode();
@@ -67,23 +153,19 @@ namespace OnePieceTCG_Manager.Gestion
                         string stJson = await stResponse.Content.ReadAsStringAsync();
                         var allSTCards = JsonConvert.DeserializeObject<List<Card>>(stJson);
 
-                        // Filtra por card_image_id (exact match)
                         cards = allSTCards
                             .Where(c => c.card_image_id.Equals(cardId, StringComparison.OrdinalIgnoreCase))
                             .ToList();
                     }
 
-                    // Si no se encontró nada en ninguno de los dos
                     if (cards == null || cards.Count == 0)
                     {
                         MessageBox.Show("No se encontró ninguna carta con ese ID.", "Sin resultados", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         return;
                     }
 
-                    // 3️⃣ — Selecciona la carta (normal o alternate)
                     Card selectedCard = isAlter.Checked && cards.Count > 1 ? cards[1] : cards[0];
 
-                    // 4️⃣ — Mostrar valores en los inputs
                     inputCardName.Text = selectedCard.card_name;
                     inputSet.Text = selectedCard.set_name;
                     inputRarity.Text = selectedCard.rarity;
@@ -97,7 +179,6 @@ namespace OnePieceTCG_Manager.Gestion
                     inputCounter.Text = selectedCard.counter_amount?.ToString() ?? "";
                     inputDescription.Text = selectedCard.card_text;
 
-                    // 5️⃣ — Cargar imagen
                     if (!string.IsNullOrEmpty(selectedCard.card_image))
                     {
                         using (var imgStream = await client.GetStreamAsync(selectedCard.card_image))
@@ -117,42 +198,38 @@ namespace OnePieceTCG_Manager.Gestion
             }
         }
 
+        // 🔹 Añadir carta (modo alta)
         private void addButton_Click(object sender, EventArgs e)
         {
             try
             {
-                // Validar campos básicos
                 if (string.IsNullOrWhiteSpace(inputCardID.Text) || string.IsNullOrWhiteSpace(inputCardName.Text))
                 {
                     MessageBox.Show("Primero busca una carta antes de añadirla al stock.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
-                using (var db = new Data.OnePieceContext())
+                using (var db = new OnePieceContext())
                 {
                     string cardId = inputCardID.Text.Trim();
-
-                    // Buscar si la carta ya existe
-                    var existingCard = db.Set<Models.CardStock>().Find(cardId);
+                    var existingCard = db.Set<CardStock>().Find(cardId);
 
                     if (existingCard != null)
                     {
-                        // Si ya existe, incrementar unidades
                         existingCard.units += (int)inputCantidad.Value;
                         db.SaveChanges();
                         MessageBox.Show("✅ Se actualizó el número de unidades de la carta en el stock.", "Actualizado", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     else
                     {
-                        // Crear nueva instancia de CardStock
-                        var newCard = new Models.CardStock
+                        var newCard = new CardStock
                         {
                             cardId = inputCardID.Text.Trim(),
                             cardName = inputCardName.Text,
                             rarity = inputRarity.Text,
                             type = inputCardType.Text,
                             subType = inputCardSubType.Text,
-                            attribute = inputAtributo?.Text ?? "", // por si no existe el input
+                            attribute = inputAtributo.Text,
                             color = inputColor.Text,
                             cost = int.TryParse(inputCost.Text, out int c) ? c : 0,
                             counter = int.TryParse(inputCounter.Text, out int cnt) ? cnt : 0,
@@ -163,24 +240,48 @@ namespace OnePieceTCG_Manager.Gestion
                             units = (int)inputCantidad.Value
                         };
 
-                        // Guardar en base de datos
-                        db.Set<Models.CardStock>().Add(newCard);
+                        db.Set<CardStock>().Add(newCard);
                         db.SaveChanges();
 
                         MessageBox.Show("✅ Carta añadida correctamente al stock.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
 
-                // Opcional: limpiar los campos del formulario tras guardar
                 ClearForm();
             }
             catch (Exception ex)
             {
-                string inner = ex.InnerException?.Message ?? "(sin detalles)";
-                MessageBox.Show($"❌ Error al añadir la carta al stock:\n{ex.Message}\n\nDetalles: {inner}",
-                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"❌ Error al añadir la carta:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
 
+        // 🔹 Confirmar cambios (modo modificar)
+        private void confirmButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (var db = new OnePieceContext())
+                {
+                    var card = db.CardStock.Find(_currentCardId);
+                    if (card == null)
+                    {
+                        MessageBox.Show("No se encontró la carta a modificar.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+
+                    // Actualizar los datos
+                    card.units = (int)inputCantidad.Value;
+                    card.description = inputDescription.Text;
+                    db.SaveChanges();
+
+                    MessageBox.Show("✅ Carta actualizada correctamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    this.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"❌ Error al actualizar la carta:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void ClearForm()
@@ -201,8 +302,6 @@ namespace OnePieceTCG_Manager.Gestion
             inputCantidad.Value = 1;
             fotoCard.Image = null;
         }
-
-
     }
 
     public class Card
@@ -223,7 +322,6 @@ namespace OnePieceTCG_Manager.Gestion
         public string sub_types { get; set; }
         public int? counter_amount { get; set; }
         public string attribute { get; set; }
-        public string date_scraped { get; set; }
         public string card_image_id { get; set; }
         public string card_image { get; set; }
     }

@@ -78,7 +78,7 @@
             this.lblCardID.Location = new System.Drawing.Point(14, 25);
             this.lblCardID.Margin = new System.Windows.Forms.Padding(5, 0, 5, 0);
             this.lblCardID.Name = "lblCardID";
-            this.lblCardID.Size = new System.Drawing.Size(83, 18);
+            this.lblCardID.Size = new System.Drawing.Size(105, 25);
             this.lblCardID.TabIndex = 1;
             this.lblCardID.Text = "Card ID: ";
             // 
@@ -86,14 +86,14 @@
             // 
             this.inputCardID.Location = new System.Drawing.Point(113, 24);
             this.inputCardID.Name = "inputCardID";
-            this.inputCardID.Size = new System.Drawing.Size(103, 27);
+            this.inputCardID.Size = new System.Drawing.Size(103, 32);
             this.inputCardID.TabIndex = 2;
             // 
             // inputCardName
             // 
             this.inputCardName.Location = new System.Drawing.Point(145, 62);
             this.inputCardName.Name = "inputCardName";
-            this.inputCardName.Size = new System.Drawing.Size(203, 27);
+            this.inputCardName.Size = new System.Drawing.Size(203, 32);
             this.inputCardName.TabIndex = 4;
             // 
             // lblCardName
@@ -102,7 +102,7 @@
             this.lblCardName.Location = new System.Drawing.Point(14, 62);
             this.lblCardName.Margin = new System.Windows.Forms.Padding(5, 0, 5, 0);
             this.lblCardName.Name = "lblCardName";
-            this.lblCardName.Size = new System.Drawing.Size(111, 18);
+            this.lblCardName.Size = new System.Drawing.Size(140, 25);
             this.lblCardName.TabIndex = 3;
             this.lblCardName.Text = "Card Name: ";
             // 
@@ -121,7 +121,7 @@
             this.isAlter.AutoSize = true;
             this.isAlter.Location = new System.Drawing.Point(354, 27);
             this.isAlter.Name = "isAlter";
-            this.isAlter.Size = new System.Drawing.Size(91, 22);
+            this.isAlter.Size = new System.Drawing.Size(113, 29);
             this.isAlter.TabIndex = 6;
             this.isAlter.Text = "Es Alter";
             this.isAlter.UseVisualStyleBackColor = true;
@@ -130,7 +130,7 @@
             // 
             this.inputCardType.Location = new System.Drawing.Point(145, 100);
             this.inputCardType.Name = "inputCardType";
-            this.inputCardType.Size = new System.Drawing.Size(203, 27);
+            this.inputCardType.Size = new System.Drawing.Size(203, 32);
             this.inputCardType.TabIndex = 8;
             // 
             // lblCardType
@@ -139,7 +139,7 @@
             this.lblCardType.Location = new System.Drawing.Point(14, 100);
             this.lblCardType.Margin = new System.Windows.Forms.Padding(5, 0, 5, 0);
             this.lblCardType.Name = "lblCardType";
-            this.lblCardType.Size = new System.Drawing.Size(101, 18);
+            this.lblCardType.Size = new System.Drawing.Size(128, 25);
             this.lblCardType.TabIndex = 7;
             this.lblCardType.Text = "Card Type: ";
             // 
@@ -147,7 +147,7 @@
             // 
             this.inputRarity.Location = new System.Drawing.Point(443, 62);
             this.inputRarity.Name = "inputRarity";
-            this.inputRarity.Size = new System.Drawing.Size(42, 27);
+            this.inputRarity.Size = new System.Drawing.Size(42, 32);
             this.inputRarity.TabIndex = 14;
             // 
             // lblRarity
@@ -156,7 +156,7 @@
             this.lblRarity.Location = new System.Drawing.Point(361, 62);
             this.lblRarity.Margin = new System.Windows.Forms.Padding(5, 0, 5, 0);
             this.lblRarity.Name = "lblRarity";
-            this.lblRarity.Size = new System.Drawing.Size(69, 18);
+            this.lblRarity.Size = new System.Drawing.Size(89, 25);
             this.lblRarity.TabIndex = 13;
             this.lblRarity.Text = "Rarity: ";
             // 
@@ -164,7 +164,7 @@
             // 
             this.inputCost.Location = new System.Drawing.Point(443, 100);
             this.inputCost.Name = "inputCost";
-            this.inputCost.Size = new System.Drawing.Size(42, 27);
+            this.inputCost.Size = new System.Drawing.Size(42, 32);
             this.inputCost.TabIndex = 16;
             // 
             // lblCost
@@ -173,7 +173,7 @@
             this.lblCost.Location = new System.Drawing.Point(361, 100);
             this.lblCost.Margin = new System.Windows.Forms.Padding(5, 0, 5, 0);
             this.lblCost.Name = "lblCost";
-            this.lblCost.Size = new System.Drawing.Size(58, 18);
+            this.lblCost.Size = new System.Drawing.Size(72, 25);
             this.lblCost.TabIndex = 15;
             this.lblCost.Text = "Cost: ";
             // 
@@ -181,7 +181,7 @@
             // 
             this.inputLifes.Location = new System.Drawing.Point(576, 61);
             this.inputLifes.Name = "inputLifes";
-            this.inputLifes.Size = new System.Drawing.Size(42, 27);
+            this.inputLifes.Size = new System.Drawing.Size(42, 32);
             this.inputLifes.TabIndex = 18;
             // 
             // lblLifes
@@ -190,7 +190,7 @@
             this.lblLifes.Location = new System.Drawing.Point(491, 64);
             this.lblLifes.Margin = new System.Windows.Forms.Padding(5, 0, 5, 0);
             this.lblLifes.Name = "lblLifes";
-            this.lblLifes.Size = new System.Drawing.Size(60, 18);
+            this.lblLifes.Size = new System.Drawing.Size(74, 25);
             this.lblLifes.TabIndex = 17;
             this.lblLifes.Text = "Lifes: ";
             // 
@@ -198,7 +198,7 @@
             // 
             this.inputCardSubType.Location = new System.Drawing.Point(145, 139);
             this.inputCardSubType.Name = "inputCardSubType";
-            this.inputCardSubType.Size = new System.Drawing.Size(473, 27);
+            this.inputCardSubType.Size = new System.Drawing.Size(473, 32);
             this.inputCardSubType.TabIndex = 20;
             // 
             // lblCardSubType
@@ -207,7 +207,7 @@
             this.lblCardSubType.Location = new System.Drawing.Point(14, 139);
             this.lblCardSubType.Margin = new System.Windows.Forms.Padding(5, 0, 5, 0);
             this.lblCardSubType.Name = "lblCardSubType";
-            this.lblCardSubType.Size = new System.Drawing.Size(131, 18);
+            this.lblCardSubType.Size = new System.Drawing.Size(167, 25);
             this.lblCardSubType.TabIndex = 19;
             this.lblCardSubType.Text = "Card SubType: ";
             // 
@@ -215,7 +215,7 @@
             // 
             this.inputColor.Location = new System.Drawing.Point(86, 175);
             this.inputColor.Name = "inputColor";
-            this.inputColor.Size = new System.Drawing.Size(116, 27);
+            this.inputColor.Size = new System.Drawing.Size(116, 32);
             this.inputColor.TabIndex = 22;
             // 
             // lblColor
@@ -224,7 +224,7 @@
             this.lblColor.Location = new System.Drawing.Point(14, 176);
             this.lblColor.Margin = new System.Windows.Forms.Padding(5, 0, 5, 0);
             this.lblColor.Name = "lblColor";
-            this.lblColor.Size = new System.Drawing.Size(63, 18);
+            this.lblColor.Size = new System.Drawing.Size(81, 25);
             this.lblColor.TabIndex = 21;
             this.lblColor.Text = "Color: ";
             // 
@@ -232,7 +232,7 @@
             // 
             this.inputPower.Location = new System.Drawing.Point(290, 177);
             this.inputPower.Name = "inputPower";
-            this.inputPower.Size = new System.Drawing.Size(82, 27);
+            this.inputPower.Size = new System.Drawing.Size(82, 32);
             this.inputPower.TabIndex = 24;
             // 
             // lblPower
@@ -241,7 +241,7 @@
             this.lblPower.Location = new System.Drawing.Point(210, 178);
             this.lblPower.Margin = new System.Windows.Forms.Padding(5, 0, 5, 0);
             this.lblPower.Name = "lblPower";
-            this.lblPower.Size = new System.Drawing.Size(70, 18);
+            this.lblPower.Size = new System.Drawing.Size(89, 25);
             this.lblPower.TabIndex = 23;
             this.lblPower.Text = "Power: ";
             // 
@@ -251,7 +251,7 @@
             this.label1.Location = new System.Drawing.Point(376, 180);
             this.label1.Margin = new System.Windows.Forms.Padding(5, 0, 5, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(85, 18);
+            this.label1.Size = new System.Drawing.Size(109, 25);
             this.label1.TabIndex = 25;
             this.label1.Text = "Counter: ";
             // 
@@ -259,7 +259,7 @@
             // 
             this.inputCounter.Location = new System.Drawing.Point(476, 179);
             this.inputCounter.Name = "inputCounter";
-            this.inputCounter.Size = new System.Drawing.Size(82, 27);
+            this.inputCounter.Size = new System.Drawing.Size(82, 32);
             this.inputCounter.TabIndex = 26;
             // 
             // inputDescription
@@ -276,7 +276,7 @@
             this.lblDescription.Location = new System.Drawing.Point(7, 250);
             this.lblDescription.Margin = new System.Windows.Forms.Padding(5, 0, 5, 0);
             this.lblDescription.Name = "lblDescription";
-            this.lblDescription.Size = new System.Drawing.Size(113, 18);
+            this.lblDescription.Size = new System.Drawing.Size(141, 25);
             this.lblDescription.TabIndex = 28;
             this.lblDescription.Text = "Description: ";
             // 
@@ -295,7 +295,7 @@
             // 
             this.inputSet.Location = new System.Drawing.Point(86, 213);
             this.inputSet.Name = "inputSet";
-            this.inputSet.Size = new System.Drawing.Size(286, 27);
+            this.inputSet.Size = new System.Drawing.Size(286, 32);
             this.inputSet.TabIndex = 30;
             // 
             // lblSet
@@ -304,7 +304,7 @@
             this.lblSet.Location = new System.Drawing.Point(14, 213);
             this.lblSet.Margin = new System.Windows.Forms.Padding(5, 0, 5, 0);
             this.lblSet.Name = "lblSet";
-            this.lblSet.Size = new System.Drawing.Size(48, 18);
+            this.lblSet.Size = new System.Drawing.Size(62, 25);
             this.lblSet.TabIndex = 29;
             this.lblSet.Text = "Set: ";
             // 
@@ -314,7 +314,7 @@
             this.lblCantidad.Location = new System.Drawing.Point(491, 100);
             this.lblCantidad.Margin = new System.Windows.Forms.Padding(5, 0, 5, 0);
             this.lblCantidad.Name = "lblCantidad";
-            this.lblCantidad.Size = new System.Drawing.Size(94, 18);
+            this.lblCantidad.Size = new System.Drawing.Size(117, 25);
             this.lblCantidad.TabIndex = 31;
             this.lblCantidad.Text = "Cantidad: ";
             // 
@@ -363,7 +363,7 @@
             // 
             this.inputCantidad.Location = new System.Drawing.Point(576, 98);
             this.inputCantidad.Name = "inputCantidad";
-            this.inputCantidad.Size = new System.Drawing.Size(42, 27);
+            this.inputCantidad.Size = new System.Drawing.Size(42, 32);
             this.inputCantidad.TabIndex = 37;
             this.inputCantidad.Tag = "";
             // 
@@ -371,7 +371,7 @@
             // 
             this.inputAtributo.Location = new System.Drawing.Point(476, 215);
             this.inputAtributo.Name = "inputAtributo";
-            this.inputAtributo.Size = new System.Drawing.Size(82, 27);
+            this.inputAtributo.Size = new System.Drawing.Size(82, 32);
             this.inputAtributo.TabIndex = 39;
             // 
             // lblAtributo
@@ -380,13 +380,13 @@
             this.lblAtributo.Location = new System.Drawing.Point(376, 216);
             this.lblAtributo.Margin = new System.Windows.Forms.Padding(5, 0, 5, 0);
             this.lblAtributo.Name = "lblAtributo";
-            this.lblAtributo.Size = new System.Drawing.Size(87, 18);
+            this.lblAtributo.Size = new System.Drawing.Size(110, 25);
             this.lblAtributo.TabIndex = 38;
             this.lblAtributo.Text = "Atributo: ";
             // 
             // FrmAddStock
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 18F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(13F, 25F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(965, 536);
             this.Controls.Add(this.inputAtributo);
@@ -427,7 +427,10 @@
             this.Font = new System.Drawing.Font("Verdana", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Margin = new System.Windows.Forms.Padding(5);
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "FrmAddStock";
+            this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Añadir Stock";
             this.Load += new System.EventHandler(this.FrmAddStock_Load);
