@@ -10,5 +10,6 @@ namespace OnePieceTCG_Manager.Models
         public string codUsu { get; set; }
         public string userName { get; set; }
         public string passwd { get; set; }
+        public string hostname { get; set; }
     }
 }

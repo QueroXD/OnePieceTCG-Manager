@@ -11,6 +11,10 @@ namespace OnePieceTCG_Manager
         {
             InitializeComponent();
         }
+        private void FrmLogin_Load(object sender, EventArgs e)
+        {
+            AutoLogin();
+        }
 
         private void btnLogin_Click(object sender, EventArgs e)
         {
@@ -39,6 +43,28 @@ namespace OnePieceTCG_Manager
                     else
                     {
                         MessageBox.Show("❌ Usuario o contraseña incorrectos", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al conectar con la base de datos:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        public void AutoLogin()
+        {
+            string currentHostname = System.Environment.MachineName;
+            try
+            {
+                using (var db = new OnePieceContext())
+                {
+                    var user = db.Usuarios.FirstOrDefault(u => u.hostname == currentHostname);
+                    if (user != null)
+                    {
+                        inputUsername.Text = user.userName;
+                        inputPasswd.Text = user.passwd;
+                        btnLogin.PerformClick();
                     }
                 }
             }
