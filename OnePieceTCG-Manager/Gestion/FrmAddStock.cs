@@ -181,15 +181,26 @@ namespace OnePieceTCG_Manager.Gestion
 
                     if (!string.IsNullOrEmpty(selectedCard.card_image))
                     {
-                        using (var imgStream = await client.GetStreamAsync(selectedCard.card_image))
-                        {
-                            fotoCard.Image = Image.FromStream(imgStream);
-                        }
+                        fotoCard.ImageLocation = selectedCard.card_image;
                     }
                     else
                     {
                         fotoCard.Image = null;
                     }
+
+                    using (var db = new OnePieceContext())
+                    {
+                        var existingCard = db.Set<CardStock>().Find(cardId);
+                        if (existingCard != null)
+                        {
+                            inputCantidad.Value = existingCard.units;
+                        }
+                        else
+                        {
+                            inputCantidad.Value = 1;
+                        }
+                    }
+
                 }
                 catch (Exception ex)
                 {
@@ -237,7 +248,8 @@ namespace OnePieceTCG_Manager.Gestion
                             setDesc = inputSet.Text,
                             isAlter = isAlter.Checked,
                             description = inputDescription.Text,
-                            units = (int)inputCantidad.Value
+                            units = (int)inputCantidad.Value,
+                            cardImage = fotoCard.ImageLocation
                         };
 
                         db.Set<CardStock>().Add(newCard);
