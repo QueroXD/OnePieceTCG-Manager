@@ -227,7 +227,7 @@ namespace OnePieceTCG_Manager.Gestion
 
                     if (existingCard != null)
                     {
-                        existingCard.units += existingCard.units - (int)inputCantidad.Value;
+                        existingCard.units = (int)inputCantidad.Value;
                         db.SaveChanges();
                         MessageBox.Show("✅ Se actualizó el número de unidades de la carta en el stock.", "Actualizado", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
