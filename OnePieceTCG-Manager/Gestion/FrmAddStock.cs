@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using OnePieceTCG_Manager.Data;
 using OnePieceTCG_Manager.Models;
+using OnePieceTCG_Manager.Utils;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -8,6 +9,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.IO;
 
 namespace OnePieceTCG_Manager.Gestion
 {
@@ -94,17 +96,29 @@ namespace OnePieceTCG_Manager.Gestion
                     inputCantidad.Value = card.units;
                     isAlter.Checked = card.isAlter;
 
-                    // Cargar imagen si existe ruta o URL
-                    if (!string.IsNullOrEmpty(card.cardId))
+                    // Cargar imagen si existe
+                    if (!string.IsNullOrEmpty(card.cardImage))
                     {
                         try
                         {
-                            fotoCard.ImageLocation = card.cardImage;
+                            string ext = Path.GetExtension(card.cardImage)?.ToLowerInvariant();
+                            if (ext == ".webp")
+                            {
+                                _ = ImageUtils.CargarImagenAsync(fotoCard, card.cardImage);
+                            }
+                            else
+                            {
+                                fotoCard.LoadAsync(card.cardImage);
+                            }
                         }
                         catch
                         {
                             fotoCard.Image = null;
                         }
+                    }
+                    else
+                    {
+                        fotoCard.Image = null;
                     }
                 }
             }
@@ -166,6 +180,7 @@ namespace OnePieceTCG_Manager.Gestion
 
                     Card selectedCard = isAlter.Checked && cards.Count > 1 ? cards[1] : cards[0];
 
+                    // Asignar valores al formulario
                     inputCardName.Text = selectedCard.card_name;
                     inputSet.Text = selectedCard.set_name;
                     inputRarity.Text = selectedCard.rarity;
@@ -179,28 +194,37 @@ namespace OnePieceTCG_Manager.Gestion
                     inputCounter.Text = selectedCard.counter_amount?.ToString() ?? "";
                     inputDescription.Text = selectedCard.card_text;
 
+                    // 🔹 Cargar imagen con fallback rápido para JPG/PNG y Magick para WebP
                     if (!string.IsNullOrEmpty(selectedCard.card_image))
                     {
-                        fotoCard.ImageLocation = selectedCard.card_image;
+                        string ext = Path.GetExtension(selectedCard.card_image)?.ToLowerInvariant();
+                        if (ext == ".webp")
+                        {
+                            await ImageUtils.CargarImagenAsync(fotoCard, selectedCard.card_image);
+                        }
+                        else
+                        {
+                            try
+                            {
+                                fotoCard.LoadAsync(selectedCard.card_image);
+                            }
+                            catch
+                            {
+                                fotoCard.Image = null;
+                            }
+                        }
                     }
                     else
                     {
                         fotoCard.Image = null;
                     }
 
+                    // Asignar unidades desde base de datos si existe
                     using (var db = new OnePieceContext())
                     {
                         var existingCard = db.Set<CardStock>().Find(cardId);
-                        if (existingCard != null)
-                        {
-                            inputCantidad.Value = existingCard.units;
-                        }
-                        else
-                        {
-                            inputCantidad.Value = 1;
-                        }
+                        inputCantidad.Value = existingCard?.units ?? 1;
                     }
-
                 }
                 catch (Exception ex)
                 {

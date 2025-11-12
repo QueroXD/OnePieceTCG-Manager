@@ -348,6 +348,7 @@
             this.confirmButton.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.confirmButton.TabIndex = 35;
             this.confirmButton.TabStop = false;
+            this.confirmButton.Click += new System.EventHandler(this.confirmButton_Click);
             // 
             // infoButton
             // 
