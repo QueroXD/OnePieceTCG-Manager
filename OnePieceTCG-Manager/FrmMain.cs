@@ -18,6 +18,11 @@ namespace OnePieceTCG_Manager
             InitializeComponent();
         }
 
+        private void FrmMain_Load(object sender, EventArgs e)
+        {
+            economiaToolStripMenuItem.Visible = false; // Ocultar el menú de economía por ahora
+        }
+
         private void añadirStockToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var frm = Application.OpenForms.OfType<FrmAddStock>().FirstOrDefault();
@@ -50,7 +55,6 @@ namespace OnePieceTCG_Manager
             }
         }
 
-
         private void verStockToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var frm = Application.OpenForms.OfType<FrmVerStock>().FirstOrDefault();
@@ -65,6 +69,7 @@ namespace OnePieceTCG_Manager
                 frm.BringToFront();
             }
         }
+
         private void salirToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.Close();

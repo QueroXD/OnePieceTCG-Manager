@@ -1,7 +1,7 @@
-﻿using OnePieceTCG_Manager.Data;
-using System;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using OnePieceTCG_Manager.Models;
 
 namespace OnePieceTCG_Manager.Gestion.Views
 {
@@ -10,28 +10,22 @@ namespace OnePieceTCG_Manager.Gestion.Views
         public UC_StockListView()
         {
             InitializeComponent();
-            LoadStockData();
         }
 
-        private void LoadStockData()
+        public void LoadData(IEnumerable<CardStock> data)
         {
-            using (var db = new OnePieceContext())
+            var list = data.Select(c => new
             {
-                var stockList = db.CardStock
-                    .Select(c => new
-                    {
-                        ID = c.cardId,
-                        Nombre = c.cardName,
-                        Rareza = c.rarity,
-                        Tipo = c.type,
-                        Color = c.color,
-                        Coste = c.cost,
-                        Unidades = c.units
-                    })
-                    .ToList();
+                ID = c.cardId,
+                Nombre = c.cardName,
+                Rareza = c.rarity,
+                Tipo = c.type,
+                Color = c.color,
+                Coste = c.cost,
+                Unidades = c.units
+            }).ToList();
 
-                dataGrid.DataSource = stockList;
-            }
+            dataGrid.DataSource = list;
 
             dataGrid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dataGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
@@ -46,7 +40,8 @@ namespace OnePieceTCG_Manager.Gestion.Views
                     string id = dataGrid.Rows[e.RowIndex].Cells["ID"].Value.ToString();
                     var frm = new FrmAddStock(id, modoSoloUnidades: true);
                     frm.ShowDialog();
-                    LoadStockData();
+
+                    // no refresca aquí, lo hará FrmVerStock
                 }
             };
         }

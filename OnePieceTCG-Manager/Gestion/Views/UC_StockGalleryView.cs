@@ -1,8 +1,7 @@
-﻿using OnePieceTCG_Manager.Data;
+﻿using OnePieceTCG_Manager.Models;
 using OnePieceTCG_Manager.Utils;
-using System;
+using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -13,75 +12,77 @@ namespace OnePieceTCG_Manager.Gestion.Views
         public UC_StockGalleryView()
         {
             InitializeComponent();
-            _ = LoadGalleryAsync(); // no bloquea la UI
         }
 
-        private async Task LoadGalleryAsync()
+        public async Task LoadDataAsync(List<CardStock> data)
         {
             flowPanel.Controls.Clear();
 
-            using (var db = new OnePieceContext())
+            foreach (var card in data)
             {
-                var stockList = db.CardStock.ToList();
-
-                foreach (var card in stockList)
-                {
-                    var panel = new Panel
-                    {
-                        Width = 180,
-                        Height = 250,
-                        Margin = new Padding(10),
-                        BorderStyle = BorderStyle.FixedSingle,
-                        BackColor = Color.White
-                    };
-
-                    PictureBox pic = new PictureBox
-                    {
-                        SizeMode = PictureBoxSizeMode.Zoom,
-                        Dock = DockStyle.Top,
-                        Height = 180
-                    };
-
-                    // 🔹 carga asíncrona (rápida para PNG/JPG, decodifica WebP solo si es necesario)
-                    await ImageUtils.CargarImagenAsync(pic, card.cardImage);
-
-                    Label lblName = new Label
-                    {
-                        Text = card.cardName,
-                        Dock = DockStyle.Top,
-                        Font = new Font("Segoe UI", 9, FontStyle.Bold),
-                        TextAlign = ContentAlignment.MiddleCenter
-                    };
-
-                    Label lblUnits = new Label
-                    {
-                        Text = $"x{card.units}",
-                        Dock = DockStyle.Bottom,
-                        Font = new Font("Segoe UI", 9, FontStyle.Regular),
-                        ForeColor = Color.DarkGreen,
-                        TextAlign = ContentAlignment.MiddleCenter
-                    };
-
-                    panel.Controls.Add(lblUnits);
-                    panel.Controls.Add(lblName);
-                    panel.Controls.Add(pic);
-
-                    // Click en cualquier parte de la card
-                    panel.Click += (s, e) => OpenEditForm(card.cardId);
-                    pic.Click += (s, e) => OpenEditForm(card.cardId);
-                    lblName.Click += (s, e) => OpenEditForm(card.cardId);
-                    lblUnits.Click += (s, e) => OpenEditForm(card.cardId);
-
-                    flowPanel.Controls.Add(panel);
-                }
+                var cardPanel = await CrearPanelAsync(card);
+                flowPanel.Controls.Add(cardPanel);
             }
         }
 
-        private void OpenEditForm(string cardId)
+        private async Task<Panel> CrearPanelAsync(CardStock card)
+        {
+            var panel = new Panel
+            {
+                Width = 180,
+                Height = 250,
+                BackColor = Color.White,
+                Margin = new Padding(10),
+                BorderStyle = BorderStyle.FixedSingle
+            };
+
+            var pic = new PictureBox
+            {
+                Dock = DockStyle.Top,
+                Height = 180,
+                SizeMode = PictureBoxSizeMode.Zoom
+            };
+
+            await ImageUtils.CargarImagenAsync(pic, card.cardImage);
+
+            var lblName = new Label
+            {
+                Text = card.cardName,
+                Dock = DockStyle.Top,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                Height = 25,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+
+            var lblUnits = new Label
+            {
+                Text = $"x{card.units}",
+                Dock = DockStyle.Bottom,
+                Font = new Font("Segoe UI", 9),
+                ForeColor = Color.DarkGreen,
+                Height = 25,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+
+            panel.Controls.Add(lblUnits);
+            panel.Controls.Add(lblName);
+            panel.Controls.Add(pic);
+
+            // eventos
+            panel.Click += (s, e) => AbrirEditor(card.cardId);
+            pic.Click += (s, e) => AbrirEditor(card.cardId);
+            lblName.Click += (s, e) => AbrirEditor(card.cardId);
+            lblUnits.Click += (s, e) => AbrirEditor(card.cardId);
+
+            return panel;
+        }
+
+        private void AbrirEditor(string cardId)
         {
             var frm = new FrmAddStock(cardId, modoSoloUnidades: true);
             frm.ShowDialog();
-            _ = LoadGalleryAsync(); // refrescar sin bloquear
+
+            // No recarga aquí → lo hace FrmVerStock
         }
     }
 }

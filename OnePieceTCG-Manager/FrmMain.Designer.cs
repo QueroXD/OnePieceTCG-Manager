@@ -68,14 +68,14 @@
             // testConexiónToolStripMenuItem
             // 
             this.testConexiónToolStripMenuItem.Name = "testConexiónToolStripMenuItem";
-            this.testConexiónToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.testConexiónToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
             this.testConexiónToolStripMenuItem.Text = "Test Conexión";
             this.testConexiónToolStripMenuItem.Click += new System.EventHandler(this.testConexiónToolStripMenuItem_Click);
             // 
             // salirToolStripMenuItem
             // 
             this.salirToolStripMenuItem.Name = "salirToolStripMenuItem";
-            this.salirToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.salirToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
             this.salirToolStripMenuItem.Text = "Salir";
             this.salirToolStripMenuItem.Click += new System.EventHandler(this.salirToolStripMenuItem_Click);
             // 
@@ -91,14 +91,14 @@
             // verStockToolStripMenuItem
             // 
             this.verStockToolStripMenuItem.Name = "verStockToolStripMenuItem";
-            this.verStockToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.verStockToolStripMenuItem.Size = new System.Drawing.Size(141, 22);
             this.verStockToolStripMenuItem.Text = "Ver Stock";
             this.verStockToolStripMenuItem.Click += new System.EventHandler(this.verStockToolStripMenuItem_Click);
             // 
             // añadirStockToolStripMenuItem
             // 
             this.añadirStockToolStripMenuItem.Name = "añadirStockToolStripMenuItem";
-            this.añadirStockToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.añadirStockToolStripMenuItem.Size = new System.Drawing.Size(141, 22);
             this.añadirStockToolStripMenuItem.Text = "Añadir Stock";
             this.añadirStockToolStripMenuItem.Click += new System.EventHandler(this.añadirStockToolStripMenuItem_Click);
             // 
@@ -114,13 +114,13 @@
             // ingresosEstimadosToolStripMenuItem
             // 
             this.ingresosEstimadosToolStripMenuItem.Name = "ingresosEstimadosToolStripMenuItem";
-            this.ingresosEstimadosToolStripMenuItem.Size = new System.Drawing.Size(175, 22);
+            this.ingresosEstimadosToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.ingresosEstimadosToolStripMenuItem.Text = "Ingresos estimados";
             // 
             // ingresosGanadosToolStripMenuItem
             // 
             this.ingresosGanadosToolStripMenuItem.Name = "ingresosGanadosToolStripMenuItem";
-            this.ingresosGanadosToolStripMenuItem.Size = new System.Drawing.Size(175, 22);
+            this.ingresosGanadosToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.ingresosGanadosToolStripMenuItem.Text = "Ingresos Ganados";
             // 
             // FrmMain
@@ -137,6 +137,7 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "One Piece TCG - Manager";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
+            this.Load += new System.EventHandler(this.FrmMain_Load);
             this.menu.ResumeLayout(false);
             this.menu.PerformLayout();
             this.ResumeLayout(false);
