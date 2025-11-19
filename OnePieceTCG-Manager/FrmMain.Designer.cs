@@ -114,13 +114,13 @@
             // ingresosEstimadosToolStripMenuItem
             // 
             this.ingresosEstimadosToolStripMenuItem.Name = "ingresosEstimadosToolStripMenuItem";
-            this.ingresosEstimadosToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.ingresosEstimadosToolStripMenuItem.Size = new System.Drawing.Size(175, 22);
             this.ingresosEstimadosToolStripMenuItem.Text = "Ingresos estimados";
             // 
             // ingresosGanadosToolStripMenuItem
             // 
             this.ingresosGanadosToolStripMenuItem.Name = "ingresosGanadosToolStripMenuItem";
-            this.ingresosGanadosToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.ingresosGanadosToolStripMenuItem.Size = new System.Drawing.Size(175, 22);
             this.ingresosGanadosToolStripMenuItem.Text = "Ingresos Ganados";
             // 
             // FrmMain

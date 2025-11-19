@@ -64,6 +64,7 @@
             this.inputCantidad = new System.Windows.Forms.NumericUpDown();
             this.inputAtributo = new System.Windows.Forms.TextBox();
             this.lblAtributo = new System.Windows.Forms.Label();
+            this.lblStatus = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.fotoCard)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.addButton)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.delButton)).BeginInit();
@@ -283,13 +284,14 @@
             // fotoCard
             // 
             this.fotoCard.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.fotoCard.Location = new System.Drawing.Point(647, 27);
+            this.fotoCard.Location = new System.Drawing.Point(647, 40);
             this.fotoCard.Margin = new System.Windows.Forms.Padding(5);
             this.fotoCard.Name = "fotoCard";
             this.fotoCard.Size = new System.Drawing.Size(300, 419);
             this.fotoCard.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.fotoCard.TabIndex = 0;
             this.fotoCard.TabStop = false;
+            this.fotoCard.DoubleClick += new System.EventHandler(this.fotoCard_DoubleClick);
             // 
             // inputSet
             // 
@@ -385,11 +387,23 @@
             this.lblAtributo.TabIndex = 38;
             this.lblAtributo.Text = "Atributo: ";
             // 
+            // lblStatus
+            // 
+            this.lblStatus.AutoSize = true;
+            this.lblStatus.Font = new System.Drawing.Font("Verdana", 12F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblStatus.ForeColor = System.Drawing.Color.Green;
+            this.lblStatus.Location = new System.Drawing.Point(644, 17);
+            this.lblStatus.Name = "lblStatus";
+            this.lblStatus.Size = new System.Drawing.Size(48, 18);
+            this.lblStatus.TabIndex = 40;
+            this.lblStatus.Text = "New";
+            // 
             // FrmAddStock
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(965, 536);
+            this.Controls.Add(this.lblStatus);
             this.Controls.Add(this.inputAtributo);
             this.Controls.Add(this.lblAtributo);
             this.Controls.Add(this.inputCantidad);
@@ -483,5 +497,6 @@
         private System.Windows.Forms.NumericUpDown inputCantidad;
         private System.Windows.Forms.TextBox inputAtributo;
         private System.Windows.Forms.Label lblAtributo;
+        private System.Windows.Forms.Label lblStatus;
     }
 }

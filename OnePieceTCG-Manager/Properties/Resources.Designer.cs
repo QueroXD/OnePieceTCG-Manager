@@ -63,6 +63,16 @@ namespace OnePieceTCG_Manager.Properties {
         /// <summary>
         ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap close_buton {
+            get {
+                object obj = ResourceManager.GetObject("close_buton", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap optcg_manager {
             get {
                 object obj = ResourceManager.GetObject("optcg-manager", resourceCulture);

@@ -18,6 +18,7 @@ namespace OnePieceTCG_Manager.Gestion
         public string BaseURL = "https://optcgapi.com/api/";
         public string CardQuery = "sets/card/";
         public string STQuery = "allSTCards/";
+        public string PromoQuery = "promos/card/";
 
         private bool _modoModificacion = false;
         private string _currentCardId = null;
@@ -25,6 +26,7 @@ namespace OnePieceTCG_Manager.Gestion
         public FrmAddStock()
         {
             InitializeComponent();
+            lblStatus.Visible = false;
         }
 
         /// <summary>
@@ -42,13 +44,18 @@ namespace OnePieceTCG_Manager.Gestion
             // Ajustar visibilidad de botones
             addButton.Visible = false;
             confirmButton.Visible = true;
+            lblStatus.Visible = false;
 
             if (modoSoloUnidades)
             {
                 // Desactivar todos los controles excepto unidades y Confirmar
                 foreach (Control c in Controls)
-                    if (c.Name != "inputCantidad" && c.Name != "confirmButton")
+                    if (c.Name != "inputCantidad" &&
+                        c.Name != "confirmButton" &&
+                        c.Name != "fotoCard")
+                    {
                         c.Enabled = false;
+                    }
             }
         }
 
@@ -148,39 +155,69 @@ namespace OnePieceTCG_Manager.Gestion
             {
                 try
                 {
-                    string url = $"{BaseURL}{CardQuery}{cardId}/";
-                    HttpResponseMessage response = await client.GetAsync(url);
-
                     List<Card> cards = null;
 
-                    if (response.IsSuccessStatusCode)
-                    {
-                        string json = await response.Content.ReadAsStringAsync();
-                        cards = JsonConvert.DeserializeObject<List<Card>>(json);
-                    }
-                    else
-                    {
-                        string stUrl = $"{BaseURL}{STQuery}";
-                        var stResponse = await client.GetAsync(stUrl);
-                        stResponse.EnsureSuccessStatusCode();
+                    // ===================================================
+                    // 1️⃣ PRIMERA QUERY → PROMOS
+                    // ===================================================
+                    string promoUrl = $"{BaseURL}{PromoQuery}{cardId}/";
+                    HttpResponseMessage promoResponse = await client.GetAsync(promoUrl);
 
-                        string stJson = await stResponse.Content.ReadAsStringAsync();
-                        var allSTCards = JsonConvert.DeserializeObject<List<Card>>(stJson);
+                    if (promoResponse.IsSuccessStatusCode)
+                    {
+                        string promoJson = await promoResponse.Content.ReadAsStringAsync();
+                        cards = JsonConvert.DeserializeObject<List<Card>>(promoJson);
 
-                        cards = allSTCards
-                            .Where(c => c.card_image_id.Equals(cardId, StringComparison.OrdinalIgnoreCase))
-                            .ToList();
+                        if (cards != null && cards.Count > 0)
+                            goto PROCESS_RESULT;
                     }
+
+                    // ===================================================
+                    // 2️⃣ SEGUNDA QUERY → SETS/CARD
+                    // ===================================================
+                    string setsUrl = $"{BaseURL}{CardQuery}{cardId}/";
+                    HttpResponseMessage setsResponse = await client.GetAsync(setsUrl);
+
+                    if (setsResponse.IsSuccessStatusCode)
+                    {
+                        string setsJson = await setsResponse.Content.ReadAsStringAsync();
+                        cards = JsonConvert.DeserializeObject<List<Card>>(setsJson);
+
+                        if (cards != null && cards.Count > 0)
+                            goto PROCESS_RESULT;
+                    }
+
+                    // ===================================================
+                    // 3️⃣ TERCERA QUERY → ALL ST CARDS (filtrando)
+                    // ===================================================
+                    string stUrl = $"{BaseURL}{STQuery}";
+                    var stResponse = await client.GetAsync(stUrl);
+                    stResponse.EnsureSuccessStatusCode();
+
+                    string stJson = await stResponse.Content.ReadAsStringAsync();
+                    var allSTCards = JsonConvert.DeserializeObject<List<Card>>(stJson);
+
+                    cards = allSTCards
+                        .Where(c => c.card_image_id.Equals(cardId, StringComparison.OrdinalIgnoreCase))
+                        .ToList();
 
                     if (cards == null || cards.Count == 0)
                     {
-                        MessageBox.Show("No se encontró ninguna carta con ese ID.", "Sin resultados", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show("No se encontró ninguna carta con ese ID.",
+                                        "Sin resultados", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         return;
                     }
 
+                PROCESS_RESULT:
+
+                    // ===================================================
+                    // Elegir versión normal o alternativa
+                    // ===================================================
                     Card selectedCard = isAlter.Checked && cards.Count > 1 ? cards[1] : cards[0];
 
-                    // Asignar valores al formulario
+                    // ===================================================
+                    // Rellenar los inputs
+                    // ===================================================
                     inputCardName.Text = selectedCard.card_name;
                     inputSet.Text = selectedCard.set_name;
                     inputRarity.Text = selectedCard.rarity;
@@ -194,36 +231,81 @@ namespace OnePieceTCG_Manager.Gestion
                     inputCounter.Text = selectedCard.counter_amount?.ToString() ?? "";
                     inputDescription.Text = selectedCard.card_text;
 
-                    // 🔹 Cargar imagen con fallback rápido para JPG/PNG y Magick para WebP
-                    if (!string.IsNullOrEmpty(selectedCard.card_image))
+                    // ===================================================
+                    // Carga imagen con fallback WebP → JPG/PNG y fallback final a OP sitio oficial
+                    // ===================================================
+                    string imageUrl = selectedCard.card_image;
+
+                    // 1) Si viene null, fallback directo al sitio oficial
+                    if (string.IsNullOrEmpty(imageUrl))
                     {
-                        string ext = Path.GetExtension(selectedCard.card_image)?.ToLowerInvariant();
-                        if (ext == ".webp")
-                        {
-                            await ImageUtils.CargarImagenAsync(fotoCard, selectedCard.card_image);
-                        }
-                        else
-                        {
-                            try
-                            {
-                                fotoCard.LoadAsync(selectedCard.card_image);
-                            }
-                            catch
-                            {
-                                fotoCard.Image = null;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        fotoCard.Image = null;
+                        imageUrl = $"https://en.onepiece-cardgame.com/images/cardlist/card/{cardId}.png";
                     }
 
-                    // Asignar unidades desde base de datos si existe
+                    bool loaded = false;
+
+                    // 2) Intentar WebP mediante ImageUtils si aplica
+                    string ext = Path.GetExtension(imageUrl)?.ToLowerInvariant();
+                    if (ext == ".webp")
+                    {
+                        try
+                        {
+                            await ImageUtils.CargarImagenAsync(fotoCard, imageUrl);
+                            loaded = true;
+                        }
+                        catch { }
+                    }
+
+                    // 3) Si no se cargó, intentar carga normal (PNG/JPG)
+                    if (!loaded)
+                    {
+                        try
+                        {
+                            fotoCard.Load(imageUrl);
+                            loaded = true;
+                        }
+                        catch { }
+                    }
+
+                    // 4) Último fallback: sitio oficial, solo si aún no se cargó y no venía ya usando ese URL
+                    if (!loaded && !imageUrl.Contains("onepiece-cardgame.com"))
+                    {
+                        string fallbackOfficial = $"https://en.onepiece-cardgame.com/images/cardlist/card/{cardId}.png";
+                        try
+                        {
+                            fotoCard.Load(fallbackOfficial);
+                            loaded = true;
+                        }
+                        catch
+                        {
+                            fotoCard.Image = null;
+                        }
+                    }
+
+
+
+                    // ===================================================
+                    // Mostrar unidades si ya existe en DB
+                    // ===================================================
                     using (var db = new OnePieceContext())
                     {
                         var existingCard = db.Set<CardStock>().Find(cardId);
-                        inputCantidad.Value = existingCard?.units ?? 1;
+                        if (existingCard != null)
+                        {
+                            lblStatus.Text = "Ya en inventario: " + existingCard.units;
+                            lblStatus.ForeColor = Color.Red;
+                            lblStatus.Visible = true;
+
+                            inputCantidad.Value = existingCard.units;
+                        }
+                        else
+                        {
+                            lblStatus.Text = "New";
+                            lblStatus.ForeColor = Color.Green;
+                            lblStatus.Visible = true;
+
+                            inputCantidad.Value = 1;
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -232,6 +314,7 @@ namespace OnePieceTCG_Manager.Gestion
                 }
             }
         }
+
 
         // 🔹 Añadir carta (modo alta)
         private void addButton_Click(object sender, EventArgs e)
@@ -337,6 +420,25 @@ namespace OnePieceTCG_Manager.Gestion
             isAlter.Checked = false;
             inputCantidad.Value = 1;
             fotoCard.Image = null;
+        }
+
+        private void fotoCard_DoubleClick(object sender, EventArgs e)
+        {
+            // Mostrar el formulario para introducir el enlace
+            FrmModal enlaceForm = new FrmModal();
+
+            // ⭐ NUEVO → Si ya hay imagen cargada, mostrar su link en el input
+            if (!string.IsNullOrEmpty(fotoCard.ImageLocation))
+            {
+                enlaceForm.Enlace = fotoCard.ImageLocation;
+            }
+
+            if (enlaceForm.ShowDialog() == DialogResult.OK)
+            {
+                // Si el enlace es válido, cargamos la imagen en el PictureBox
+                string enlace = enlaceForm.Enlace;
+                ImageUtils.CargarImagen(fotoCard, enlace);
+            }
         }
     }
 
