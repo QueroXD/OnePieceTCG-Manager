@@ -126,6 +126,7 @@
             this.isAlter.TabIndex = 6;
             this.isAlter.Text = "Es Alter";
             this.isAlter.UseVisualStyleBackColor = true;
+            this.isAlter.Visible = false;
             // 
             // inputCardType
             // 
