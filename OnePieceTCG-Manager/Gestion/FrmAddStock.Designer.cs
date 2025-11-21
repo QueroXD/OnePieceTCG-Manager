@@ -85,6 +85,7 @@
             // 
             // inputCardID
             // 
+            this.inputCardID.CharacterCasing = System.Windows.Forms.CharacterCasing.Upper;
             this.inputCardID.Location = new System.Drawing.Point(113, 24);
             this.inputCardID.Name = "inputCardID";
             this.inputCardID.Size = new System.Drawing.Size(103, 27);
