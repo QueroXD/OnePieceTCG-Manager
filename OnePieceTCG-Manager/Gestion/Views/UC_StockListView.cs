@@ -37,13 +37,18 @@ namespace OnePieceTCG_Manager.Gestion.Views
             {
                 if (e.RowIndex >= 0)
                 {
-                    string id = dataGrid.Rows[e.RowIndex].Cells["ID"].Value.ToString();
-                    var frm = new FrmAddStock(id, modoSoloUnidades: true);
-                    frm.ShowDialog();
+                    var row = data.ElementAt(e.RowIndex);
 
-                    // no refresca aquí, lo hará FrmVerStock
+                    var frm = new FrmAddStock(
+                        row.cardId,
+                        row.isAlter,
+                        row.cardImage,
+                        modoSoloUnidades: true);
+
+                    frm.ShowDialog();
                 }
             };
+
         }
     }
 }

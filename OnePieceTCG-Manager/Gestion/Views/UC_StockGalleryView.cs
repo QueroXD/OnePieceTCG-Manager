@@ -69,20 +69,23 @@ namespace OnePieceTCG_Manager.Gestion.Views
             panel.Controls.Add(pic);
 
             // eventos
-            panel.Click += (s, e) => AbrirEditor(card.cardId);
-            pic.Click += (s, e) => AbrirEditor(card.cardId);
-            lblName.Click += (s, e) => AbrirEditor(card.cardId);
-            lblUnits.Click += (s, e) => AbrirEditor(card.cardId);
+            panel.Click += (s, e) => AbrirEditor(card);
+            pic.Click += (s, e) => AbrirEditor(card);
+            lblName.Click += (s, e) => AbrirEditor(card);
+            lblUnits.Click += (s, e) => AbrirEditor(card);
 
             return panel;
         }
 
-        private void AbrirEditor(string cardId)
+        private void AbrirEditor(CardStock card)
         {
-            var frm = new FrmAddStock(cardId, modoSoloUnidades: true);
-            frm.ShowDialog();
+            var frm = new FrmAddStock(
+                card.cardId,
+                card.isAlter,
+                card.cardImage,
+                modoSoloUnidades: true);
 
-            // No recarga aquí → lo hace FrmVerStock
+            frm.ShowDialog();
         }
     }
 }
