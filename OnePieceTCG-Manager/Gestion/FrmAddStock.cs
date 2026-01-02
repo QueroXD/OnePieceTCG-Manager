@@ -47,6 +47,7 @@ namespace OnePieceTCG_Manager.Gestion
 
             if (modoSoloUnidades)
             {
+                FrmAddStock.ActiveForm.Text = "Detalles de la carta";
                 foreach (Control c in Controls)
                 {
                     if (c.Name != "inputCantidad" &&
@@ -75,6 +76,10 @@ namespace OnePieceTCG_Manager.Gestion
                 Close();
                 return;
             }
+
+            lblStatus.Visible = true;
+            lblStatus.BackColor = System.Drawing.Color.Yellow;
+            lblStatus.Text = "Unidades existentes: " + card.units;
 
             inputCardID.Text = card.cardId;
             inputCardName.Text = card.cardName;
@@ -159,6 +164,7 @@ namespace OnePieceTCG_Manager.Gestion
 
                 fotoCard.ImageLocation = selectedImage;
                 fotoCard.Load(selectedImage);
+                CheckIfCardExists(cardId, isAlter.Checked, selectedImage);
             }
         }
 
@@ -228,5 +234,30 @@ namespace OnePieceTCG_Manager.Gestion
             _db.SaveChanges();
             Close();
         }
+
+        private void CheckIfCardExists(string cardId, bool isAlter, string imagePath)
+        {
+            var existing = _db.CardStock.FirstOrDefault(c =>
+                c.cardId == cardId &&
+                c.isAlter == isAlter &&
+                c.cardImage == imagePath);
+
+            if (existing != null)
+            {
+                lblStatus.Visible = true;
+                lblStatus.ForeColor = System.Drawing.Color.Red;
+                lblStatus.Text = $"Ya en el inventario: {existing.units}";
+
+                inputCantidad.Value = existing.units;
+            }
+            else
+            {
+                lblStatus.Visible = true;
+                lblStatus.ForeColor = System.Drawing.Color.Green;
+                lblStatus.Text = $"NEW";
+                inputCantidad.Value = 0;
+            }
+        }
+
     }
 }
