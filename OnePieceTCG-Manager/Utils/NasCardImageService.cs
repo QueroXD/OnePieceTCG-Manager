@@ -6,7 +6,7 @@ namespace OnePieceTCG_Manager.Utils
 {
     public static class NasCardImageService
     {
-        private static readonly string NasRoot = @"\\nas-01\OnePieceTCG";
+        private static readonly string NasRoot = @"\\192.168.1.50\OnePieceTCG";
 
         public static List<string> GetImagesByCardId(string cardId)
         {
