@@ -1,10 +1,9 @@
 ﻿using DiscordRPC;
 using OnePieceTCG_Manager.Gestion;
 using System;
-using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows.Forms;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.ListView;
 
 namespace OnePieceTCG_Manager
 {
@@ -125,6 +124,11 @@ namespace OnePieceTCG_Manager
         private void salirToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.Close();
+        }
+
+        private void carpetaDeCartasToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Process.Start("explorer.exe", @"\\192.168.1.50\OnePieceTCG");
         }
     }
 }
