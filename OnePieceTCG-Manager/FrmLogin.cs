@@ -7,6 +7,9 @@ namespace OnePieceTCG_Manager
 {
     public partial class FrmLogin : Form
     {
+        public string LoggedUserCodUsu { get; private set; }
+        public string LoggedUserName { get; private set; }
+
         public FrmLogin()
         {
             InitializeComponent();
@@ -37,6 +40,8 @@ namespace OnePieceTCG_Manager
 
                     if (user != null)
                     {
+                        LoggedUserCodUsu = user.codUsu;
+                        LoggedUserName = user.userName;
                         this.DialogResult = DialogResult.OK;
                         this.Close();
                     }

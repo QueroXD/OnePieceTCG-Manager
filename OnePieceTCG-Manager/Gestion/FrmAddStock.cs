@@ -179,9 +179,21 @@ namespace OnePieceTCG_Manager.Gestion
                 c.isAlter == isAlter.Checked &&
                 c.cardImage == imagePath);
 
+
+
             if (existing != null)
             {
+                if (existing.usedCards > inputCantidad.Value)
+                {
+                    MessageBox.Show(
+                        $"No puedes reducir las unidades por debajo de las cartas en uso ({existing.usedCards}).",
+                        "Stock en uso",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    return;
+                }
                 existing.units = (int)inputCantidad.Value;
+                existing.lastUpdatedCardDate = DateTime.Now;
             }
             else
             {
@@ -209,7 +221,10 @@ namespace OnePieceTCG_Manager.Gestion
                     isAlter = isAlter.Checked,
                     description = inputDescription.Text,
                     units = (int)inputCantidad.Value,
-                    cardImage = imagePath
+                    cardImage = imagePath,
+                    usedCards = 0, // siempre 0 al crear
+                    insertedCardDate = DateTime.Now,
+                    lastUpdatedCardDate = DateTime.Now
                 });
             }
 
@@ -225,11 +240,23 @@ namespace OnePieceTCG_Manager.Gestion
                 c.isAlter == _isAlter &&
                 c.cardImage == _cardImage);
 
+
             if (card == null)
                 return;
 
+            if (card.usedCards > inputCantidad.Value)
+            {
+                MessageBox.Show(
+                    $"No puedes reducir las unidades por debajo de las cartas en uso ({card.usedCards}).",
+                    "Stock en uso",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+
             card.units = (int)inputCantidad.Value;
             card.description = inputDescription.Text;
+            card.lastUpdatedCardDate = DateTime.Now;
 
             _db.SaveChanges();
             Close();

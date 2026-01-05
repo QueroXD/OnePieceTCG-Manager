@@ -50,7 +50,16 @@ namespace OnePieceTCG_Manager.Models
         public int units { get; set; }
 
         [Required]
+        public int usedCards { get; set; }   // Cartas en uso por decks (controlado por triggers)
+
+        [Required]
         [StringLength(255)]
         public string cardImage { get; set; }
+
+        [Required]
+        public DateTime insertedCardDate { get; set; }    // Fecha de alta
+
+        [Required]
+        public DateTime lastUpdatedCardDate { get; set; } // Última modificación
     }
 }

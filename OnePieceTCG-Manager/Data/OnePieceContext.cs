@@ -9,5 +9,8 @@ namespace OnePieceTCG_Manager.Data
 
         public DbSet<Usuarios> Usuarios { get; set; }
         public DbSet<CardStock> CardStock { get; set; }
+        public DbSet<Deck> Decks { get; set; }
+        public DbSet<DeckCard> DeckCards { get; set; }
+
     }
 }

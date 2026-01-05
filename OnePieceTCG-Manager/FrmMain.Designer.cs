@@ -32,6 +32,7 @@
             this.menu = new System.Windows.Forms.MenuStrip();
             this.ajustesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.testConexiónToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.carpetaDeCartasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.salirToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.gestiónToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.verStockToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -39,7 +40,7 @@
             this.economiaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ingresosEstimadosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ingresosGanadosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.carpetaDeCartasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.decksToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menu.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -49,7 +50,8 @@
             this.menu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.ajustesToolStripMenuItem,
             this.gestiónToolStripMenuItem,
-            this.economiaToolStripMenuItem});
+            this.economiaToolStripMenuItem,
+            this.decksToolStripMenuItem});
             this.menu.Location = new System.Drawing.Point(0, 0);
             this.menu.Name = "menu";
             this.menu.Padding = new System.Windows.Forms.Padding(5, 2, 0, 2);
@@ -70,14 +72,21 @@
             // testConexiónToolStripMenuItem
             // 
             this.testConexiónToolStripMenuItem.Name = "testConexiónToolStripMenuItem";
-            this.testConexiónToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
+            this.testConexiónToolStripMenuItem.Size = new System.Drawing.Size(208, 26);
             this.testConexiónToolStripMenuItem.Text = "Test Conexión";
             this.testConexiónToolStripMenuItem.Click += new System.EventHandler(this.testConexiónToolStripMenuItem_Click);
+            // 
+            // carpetaDeCartasToolStripMenuItem
+            // 
+            this.carpetaDeCartasToolStripMenuItem.Name = "carpetaDeCartasToolStripMenuItem";
+            this.carpetaDeCartasToolStripMenuItem.Size = new System.Drawing.Size(208, 26);
+            this.carpetaDeCartasToolStripMenuItem.Text = "Carpeta de cartas";
+            this.carpetaDeCartasToolStripMenuItem.Click += new System.EventHandler(this.carpetaDeCartasToolStripMenuItem_Click);
             // 
             // salirToolStripMenuItem
             // 
             this.salirToolStripMenuItem.Name = "salirToolStripMenuItem";
-            this.salirToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
+            this.salirToolStripMenuItem.Size = new System.Drawing.Size(208, 26);
             this.salirToolStripMenuItem.Text = "Salir";
             this.salirToolStripMenuItem.Click += new System.EventHandler(this.salirToolStripMenuItem_Click);
             // 
@@ -125,12 +134,12 @@
             this.ingresosGanadosToolStripMenuItem.Size = new System.Drawing.Size(219, 26);
             this.ingresosGanadosToolStripMenuItem.Text = "Ingresos Ganados";
             // 
-            // carpetaDeCartasToolStripMenuItem
+            // decksToolStripMenuItem
             // 
-            this.carpetaDeCartasToolStripMenuItem.Name = "carpetaDeCartasToolStripMenuItem";
-            this.carpetaDeCartasToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
-            this.carpetaDeCartasToolStripMenuItem.Text = "Carpeta de cartas";
-            this.carpetaDeCartasToolStripMenuItem.Click += new System.EventHandler(this.carpetaDeCartasToolStripMenuItem_Click);
+            this.decksToolStripMenuItem.Name = "decksToolStripMenuItem";
+            this.decksToolStripMenuItem.Size = new System.Drawing.Size(62, 24);
+            this.decksToolStripMenuItem.Text = "Decks";
+            this.decksToolStripMenuItem.Click += new System.EventHandler(this.decksToolStripMenuItem_Click);
             // 
             // FrmMain
             // 
@@ -167,6 +176,7 @@
         private System.Windows.Forms.ToolStripMenuItem ingresosEstimadosToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem ingresosGanadosToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem carpetaDeCartasToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem decksToolStripMenuItem;
     }
 }
 

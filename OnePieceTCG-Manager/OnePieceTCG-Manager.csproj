@@ -88,6 +88,18 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data\OnePieceContext.cs" />
+    <Compile Include="Decks\FrmDeckEditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Decks\FrmDeckEditor.Designer.cs">
+      <DependentUpon>FrmDeckEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Decks\FrmMyDecks.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Decks\FrmMyDecks.Designer.cs">
+      <DependentUpon>FrmMyDecks.cs</DependentUpon>
+    </Compile>
     <Compile Include="FrmLogin.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -132,6 +144,8 @@
     </Compile>
     <Compile Include="Models\CardApi.cs" />
     <Compile Include="Models\CardStock.cs" />
+    <Compile Include="Models\DeckCard.cs" />
+    <Compile Include="Models\Decks.cs" />
     <Compile Include="Models\Usuarios.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

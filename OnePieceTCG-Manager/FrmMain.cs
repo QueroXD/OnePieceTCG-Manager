@@ -1,4 +1,5 @@
 ﻿using DiscordRPC;
+using OnePieceTCG_Manager.Decks;
 using OnePieceTCG_Manager.Gestion;
 using System;
 using System.Diagnostics;
@@ -10,14 +11,19 @@ namespace OnePieceTCG_Manager
     public partial class FrmMain : Form
     {
         private DiscordRpcClient rpc;
+        private readonly string _codUsu;
+        private readonly string _userName;
 
-        public FrmMain()
+        public FrmMain(string codUsu, string userName)
         {
             InitializeComponent();
+            _codUsu = codUsu;
+            _userName = userName;
         }
 
         private void FrmMain_Load(object sender, EventArgs e)
         {
+            this.Text = $"OPTCG Manager - {_userName}";
             economiaToolStripMenuItem.Visible = false; // Ocultar el menú de economía por ahora
 
             InitDiscordRPC();  // 🔥 Inicializamos el Rich Presence
@@ -130,5 +136,29 @@ namespace OnePieceTCG_Manager
         {
             Process.Start("explorer.exe", @"\\192.168.1.50\OnePieceTCG");
         }
+
+        private void decksToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Buscamos si ya hay un FrmMyDecks abierto
+            var frm = Application.OpenForms.OfType<FrmMyDecks>().FirstOrDefault();
+
+            if (frm == null)
+            {
+                // Si no hay, lo creamos
+                frm = new FrmMyDecks(_codUsu)
+                {
+                    MdiParent = this
+                };
+                frm.Show();
+            }
+            else
+            {
+                // Si ya está abierto, lo traemos al frente
+                frm.BringToFront();
+            }
+
+            UpdateRPC("Mis Decks");  // 🔥 Actualiza estado o RPC
+        }
+
     }
 }
