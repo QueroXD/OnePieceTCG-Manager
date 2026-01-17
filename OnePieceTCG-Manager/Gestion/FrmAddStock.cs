@@ -13,8 +13,7 @@ namespace OnePieceTCG_Manager.Gestion
 {
     public partial class FrmAddStock : Form
     {
-        public string BaseURL = "https://optcgapi.com/api/";
-        public string CardQuery = "sets/card/";
+        public string BaseURL = "http://192.168.1.12:48123/";
 
         private OnePieceContext _db;
 
@@ -90,6 +89,7 @@ namespace OnePieceTCG_Manager.Gestion
             inputColor.Text = card.color;
             inputCost.Text = card.cost.ToString();
             inputCounter.Text = card.counter.ToString();
+            inputLifes.Text = card.life;
             inputPower.Text = card.power.ToString();
             inputSet.Text = card.setDesc;
             inputDescription.Text = card.description;
@@ -109,19 +109,19 @@ namespace OnePieceTCG_Manager.Gestion
             using (HttpClient client = new HttpClient())
             {
                 HttpResponseMessage response =
-                    await client.GetAsync(BaseURL + CardQuery + cardId + "/");
+                    await client.GetAsync($"{BaseURL}card/{cardId}");
 
                 if (!response.IsSuccessStatusCode)
                     return;
 
-                var cards = JsonConvert.DeserializeObject<List<CardApi>>(
+                // AHORA es una sola carta, no una lista
+                var c = JsonConvert.DeserializeObject<CardApi>(
                     await response.Content.ReadAsStringAsync());
 
-                if (cards == null || cards.Count == 0)
+                if (c == null)
                     return;
 
-                CardApi c = cards[0];
-
+                // ===== Datos de la carta =====
                 inputCardName.Text = c.card_name;
                 inputSet.Text = c.set_name;
                 inputRarity.Text = c.rarity;
@@ -131,11 +131,13 @@ namespace OnePieceTCG_Manager.Gestion
                 inputAtributo.Text = c.attribute;
                 inputPower.Text = c.card_power;
                 inputCost.Text = c.card_cost;
+                inputLifes.Text = c.life;
                 inputCounter.Text = c.counter_amount.HasValue
                     ? c.counter_amount.Value.ToString()
                     : "";
                 inputDescription.Text = c.card_text;
 
+                // ===== NAS (NO SE TOCA) =====
                 var images = NasCardImageService.GetImagesByCardId(cardId);
 
                 if (images.Count == 0)
@@ -156,7 +158,6 @@ namespace OnePieceTCG_Manager.Gestion
                         }
                         else
                         {
-                            // usuario canceló → no tocamos imagen
                             return;
                         }
                     }
@@ -164,6 +165,8 @@ namespace OnePieceTCG_Manager.Gestion
 
                 fotoCard.ImageLocation = selectedImage;
                 fotoCard.Load(selectedImage);
+
+                // ===== Inventario =====
                 CheckIfCardExists(cardId, isAlter.Checked, selectedImage);
             }
         }

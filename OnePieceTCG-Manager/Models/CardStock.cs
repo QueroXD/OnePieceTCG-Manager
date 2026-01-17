@@ -36,6 +36,9 @@ namespace OnePieceTCG_Manager.Models
 
         public int cost { get; set; }
         public int counter { get; set; }
+        
+        [StringLength(2)]
+        public string life { get; set; }
         public int power { get; set; }
 
         [StringLength(50)]
