@@ -1,8 +1,8 @@
 ﻿using OnePieceTCG_Manager.Data;
 using OnePieceTCG_Manager.Models;
-using OnePieceTCG_Manager.Utils;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,62 +13,72 @@ namespace OnePieceTCG_Manager.Decks
     public partial class FrmDeckEditor : Form
     {
         private readonly OnePieceContext _db;
-        private Deck _deck;
-        private List<DeckCard> _deckCardsInMemory = new List<DeckCard>();
         private readonly string _codUsu;
 
-        private Panel _selectedLeaderPanel;
+        private Deck _deck;
+
+        // Estado en memoria (editor)
+        private Guid? _selectedLeaderId = null;          // líder actual en editor
+        private readonly Dictionary<Guid, int> _cards = new Dictionary<Guid, int>(); // cardStockId -> qty (sin líder)
+
+        // Estado “en DB” del deck cargado (para excluir su propio consumo al calcular disponibilidad)
+        private Guid? _dbLeaderId = null;
+        private readonly Dictionary<Guid, int> _dbCards = new Dictionary<Guid, int>();
+
+        // Cache de cartas (para no reconsultar por cada click)
+        private readonly Dictionary<Guid, CardStock> _stockById = new Dictionary<Guid, CardStock>();
+        private readonly Dictionary<string, Image> _imgCache = new Dictionary<string, Image>(StringComparer.OrdinalIgnoreCase);
+
+        private const int MAX_COPIES_PER_CARD = 4;
+        private const int MAX_DECK_CARDS = 50; // sin líder (One Piece TCG suele ser 50 + 1 líder)
 
         public FrmDeckEditor(string codUsu, Guid? deckId = null)
         {
             InitializeComponent();
+            pnlBottom_Resize(this, EventArgs.Empty);
 
             _db = new OnePieceContext();
             _codUsu = codUsu;
 
-            InitializeDeckGrid();
+            // eventos UI
+            txtSearch.TextChanged += (s, e) => _ = ReloadCatalogAsync();
+            chkShowNoStock.CheckedChanged += (s, e) => _ = ReloadCatalogAsync();
 
+            btnClearFilters.Click += (s, e) =>
+            {
+                txtSearch.Text = "";
+                chkShowNoStock.Checked = false;
+            };
+
+            btnSave.Click += btnSave_Click;
+            btnCancel.Click += (s, e) => Close();
+
+            // carga
             if (deckId.HasValue)
-                LoadDeck(deckId.Value);
+                LoadExistingDeck(deckId.Value);
             else
                 CreateNewDeck();
         }
 
-        #region Inicialización
-
-        private void InitializeDeckGrid()
+        private void pnlBottom_Resize(object sender, EventArgs e)
         {
-            dgvDeck.AutoGenerateColumns = false;
-            dgvDeck.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvDeck.MultiSelect = false;
-            dgvDeck.ReadOnly = true;
+            int right = pnlBottom.ClientSize.Width - 12;
 
-            dgvDeck.Columns.Clear();
-            dgvDeck.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                Name = "Id",
-                DataPropertyName = "Id",
-                Visible = false
-            });
-            dgvDeck.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                HeaderText = "Carta",
-                DataPropertyName = "cardName",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
-            });
-            dgvDeck.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                HeaderText = "Cantidad",
-                DataPropertyName = "quantity",
-                Width = 80
-            });
+            btnCancel.Left = right - btnCancel.Width;
+            btnCancel.Top = 12;
+
+            right -= (btnCancel.Width + 10);
+
+            btnSave.Left = right - btnSave.Width;
+            btnSave.Top = 12;
         }
 
         private void CreateNewDeck()
         {
             _deck = new Deck
             {
-                deckName = "Nuevo Deck", // nombre por defecto en memoria
+                deckName = "Nuevo Deck",
+                deckDescription = null,
                 codUsu = _codUsu,
                 isActive = true,
                 createdDate = DateTime.Now,
@@ -77,266 +87,510 @@ namespace OnePieceTCG_Manager.Decks
 
             txtDeckName.Text = _deck.deckName;
 
-            _ = LoadStockAsync();
-            _ = LoadLeadersAsync();
-            UpdateTotalCards();
+            _selectedLeaderId = null;
+            _dbLeaderId = null;
+            _cards.Clear();
+            _dbCards.Clear();
+
+            _ = BootstrapAsync();
         }
 
-
-        private void LoadDeck(Guid deckId)
+        private void LoadExistingDeck(Guid deckId)
         {
             _deck = _db.Decks
+                .Include(d => d.DeckCards.Select(dc => dc.CardStock))
+                .Include(d => d.LeaderCard)
                 .FirstOrDefault(d => d.Id == deckId);
 
             if (_deck == null)
             {
-                MessageBox.Show("Deck no encontrado");
+                MessageBox.Show("Deck no encontrado", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Close();
                 return;
             }
 
-            txtDeckName.Text = _deck.deckName;
+            txtDeckName.Text = _deck.deckName ?? "";
 
-            _ = LoadStockAsync();
-            LoadDeckCards();
-            _ = LoadLeadersAsync();
-            UpdateTotalCards();
+            // Estado DB
+            _dbLeaderId = _deck.leaderCardId;
+            _dbCards.Clear();
+            foreach (var dc in _deck.DeckCards)
+                _dbCards[dc.cardStockId] = dc.quantity;
+
+            // Estado editor inicial = DB
+            _selectedLeaderId = _dbLeaderId;
+            _cards.Clear();
+            foreach (var kv in _dbCards)
+                _cards[kv.Key] = kv.Value;
+
+            _ = BootstrapAsync();
         }
 
-        #endregion
-
-        #region Galería Stock
-
-        private async Task LoadStockAsync()
+        private async Task BootstrapAsync()
         {
-            flowStock.Controls.Clear();
+            await LoadStockCacheAsync();
+            await ReloadLeaderStripAsync();
+            await ReloadDeckViewAsync();
+            await ReloadCatalogAsync();
+        }
 
-            // Traemos solo datos fuertes (no dynamic) para EF
-            var stock = _db.CardStock
-                .Where(c => c.type != "Leader" && (c.units - c.usedCards) > 0)
-                .Select(c => new
+        // ============================
+        // Stock cache
+        // ============================
+        private async Task LoadStockCacheAsync()
+        {
+            _stockById.Clear();
+
+            // Traemos todas las cartas (incluye Leaders) porque el catálogo y leader strip lo necesitan
+            var all = await _db.CardStock.ToListAsync();
+            foreach (var c in all)
+                _stockById[c.Id] = c;
+        }
+
+        // ============================
+        // Cálculos clave
+        // ============================
+        private int GetDbReserved(Guid cardId)
+        {
+            // Lo que este deck ya estaba usando en DB (para excluirlo al calcular disponibilidad)
+            int qty = 0;
+            if (_dbCards.TryGetValue(cardId, out var q)) qty += q;
+            if (_dbLeaderId.HasValue && _dbLeaderId.Value == cardId) qty += 1;
+            return qty;
+        }
+
+        private int GetEditorReserved(Guid cardId)
+        {
+            // Lo que el editor está reservando ahora mismo (estado actual)
+            int qty = 0;
+            if (_cards.TryGetValue(cardId, out var q)) qty += q;
+            if (_selectedLeaderId.HasValue && _selectedLeaderId.Value == cardId) qty += 1;
+            return qty;
+        }
+
+        private int GetAvailable(Guid cardId)
+        {
+            if (!_stockById.TryGetValue(cardId, out var stock)) return 0;
+
+            // usedCards incluye todos los decks, incluido este mismo cuando editas.
+            // Para que el editor no “se coma” su propio stock, excluimos lo que este deck ya consumía en DB.
+            int usedElsewhere = stock.usedCards - GetDbReserved(cardId);
+            if (usedElsewhere < 0) usedElsewhere = 0;
+
+            int available = stock.units - usedElsewhere - GetEditorReserved(cardId);
+            return Math.Max(0, available);
+        }
+
+        private int TotalNonLeaderCardsInEditor()
+        {
+            return _cards.Values.Sum();
+        }
+
+        // ============================
+        // UI: Deck (lado izquierdo)
+        // ============================
+        private async Task ReloadDeckViewAsync()
+        {
+            // leader preview
+            await RenderLeaderPreviewAsync();
+
+            // list deck cards (sin líder)
+            pnlDeckCards.Controls.Clear();
+
+            var sorted = _cards
+                .Where(kv => kv.Value > 0)
+                .OrderBy(kv => _stockById.TryGetValue(kv.Key, out var c) ? c.cardName : "")
+                .ToList();
+
+            foreach (var kv in sorted)
+            {
+                var cardId = kv.Key;
+                var qty = kv.Value;
+
+                if (!_stockById.TryGetValue(cardId, out var stock)) continue;
+
+                var row = await CreateDeckRowAsync(stock, qty);
+                pnlDeckCards.Controls.Add(row);
+            }
+
+            // total
+            lblTotal.Text = $"Cartas: {TotalNonLeaderCardsInEditor()} / {MAX_DECK_CARDS}  (Líder aparte: 1)";
+        }
+
+        private async Task RenderLeaderPreviewAsync()
+        {
+            if (_selectedLeaderId.HasValue && _stockById.TryGetValue(_selectedLeaderId.Value, out var leader))
+            {
+                lblLeaderName.Text = leader.cardName;
+                var img = await LoadImageCachedAsync(leader.cardImage);
+                picLeader.Image = img;
+                btnClearLeader.Enabled = true;
+            }
+            else
+            {
+                lblLeaderName.Text = "Sin líder seleccionado";
+                picLeader.Image = null;
+                btnClearLeader.Enabled = false;
+            }
+        }
+
+        private async Task<Panel> CreateDeckRowAsync(CardStock stock, int qty)
+        {
+            var panel = new Panel
+            {
+                Height = 76,
+                Dock = DockStyle.Top,
+                Padding = new Padding(8),
+                Margin = new Padding(0, 0, 0, 8),
+                BackColor = Color.White,
+                BorderStyle = BorderStyle.FixedSingle
+            };
+
+            var pic = new PictureBox
+            {
+                Width = 56,
+                Height = 56,
+                SizeMode = PictureBoxSizeMode.Zoom,
+                Left = 8,
+                Top = 8
+            };
+            pic.Image = await LoadImageCachedAsync(stock.cardImage);
+
+            var lblName = new Label
+            {
+                AutoEllipsis = true,
+                Left = 72,
+                Top = 10,
+                Width = 440,
+                Height = 20,
+                Text = stock.cardName,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold)
+            };
+
+            var lblMeta = new Label
+            {
+                AutoEllipsis = true,
+                Left = 72,
+                Top = 34,
+                Width = 440,
+                Height = 18,
+                Text = $"{stock.cardId} · {stock.color} · {stock.type} · {stock.subType}",
+                Font = new Font("Segoe UI", 9, FontStyle.Regular),
+                ForeColor = Color.DimGray
+            };
+
+            var lblQty = new Label
+            {
+                Text = qty.ToString(),
+                Width = 36,
+                Height = 32,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
+            };
+
+            var btnMinus = new Button
+            {
+                Text = "−",
+                Width = 36,
+                Height = 32,
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
+            };
+
+            var btnPlus = new Button
+            {
+                Text = "+",
+                Width = 36,
+                Height = 32,
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
+            };
+
+            var btnRemove = new Button
+            {
+                Text = "Quitar",
+                Width = 64,
+                Height = 32,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
+            };
+
+            // colocación a la derecha
+            panel.Resize += (s, e) =>
+            {
+                int right = panel.ClientSize.Width - 8;
+                btnRemove.Left = right - btnRemove.Width; btnRemove.Top = 20;
+                right -= (btnRemove.Width + 8);
+
+                btnPlus.Left = right - btnPlus.Width; btnPlus.Top = 20;
+                right -= (btnPlus.Width + 4);
+
+                lblQty.Left = right - lblQty.Width; lblQty.Top = 20;
+                right -= (lblQty.Width + 4);
+
+                btnMinus.Left = right - btnMinus.Width; btnMinus.Top = 20;
+            };
+
+            btnMinus.Click += (s, e) => DecreaseCard(stock.Id);
+            btnPlus.Click += (s, e) => IncreaseCard(stock.Id);
+            btnRemove.Click += (s, e) => RemoveCard(stock.Id);
+
+            panel.Controls.Add(pic);
+            panel.Controls.Add(lblName);
+            panel.Controls.Add(lblMeta);
+            panel.Controls.Add(btnMinus);
+            panel.Controls.Add(lblQty);
+            panel.Controls.Add(btnPlus);
+            panel.Controls.Add(btnRemove);
+
+            return panel;
+        }
+
+        // ============================
+        // UI: Leader strip
+        // ============================
+        private async Task ReloadLeaderStripAsync()
+        {
+            flowLeaders.Controls.Clear();
+
+            var leaders = _stockById.Values
+                .Where(c => string.Equals(c.type, "Leader", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(c => c.cardName)
+                .ToList();
+
+            foreach (var leader in leaders)
+            {
+                int available = GetAvailable(leader.Id);
+                bool show = chkShowNoStock.Checked || available > 0;
+
+                if (!show) continue;
+
+                var card = await CreateCatalogCardAsync(leader, available, isLeader: true);
+                flowLeaders.Controls.Add(card);
+            }
+        }
+
+        // ============================
+        // UI: Catalog (derecha)
+        // ============================
+        private async Task ReloadCatalogAsync()
+        {
+            flowCatalog.Controls.Clear();
+
+            string q = (txtSearch.Text ?? "").Trim().ToLowerInvariant();
+
+            var list = _stockById.Values
+                .Where(c => !string.Equals(c.type, "Leader", StringComparison.OrdinalIgnoreCase)) // líderes arriba
+                .Where(c =>
                 {
-                    c.Id,
-                    c.cardName,
-                    c.cardId,
-                    c.color,
-                    c.type,
-                    c.subType,
-                    c.cost,
-                    c.counter,
-                    StockLibre = c.units - c.usedCards,
-                    c.cardImage
+                    if (string.IsNullOrWhiteSpace(q)) return true;
+                    return (c.cardName ?? "").ToLowerInvariant().Contains(q)
+                        || (c.cardId ?? "").ToLowerInvariant().Contains(q)
+                        || (c.subType ?? "").ToLowerInvariant().Contains(q);
                 })
                 .OrderBy(c => c.cardName)
                 .ToList();
 
-            foreach (var card in stock)
+            foreach (var stock in list)
             {
-                var panel = await CrearPanelStock(card);
-                flowStock.Controls.Add(panel);
+                int available = GetAvailable(stock.Id);
+                bool show = chkShowNoStock.Checked || available > 0;
+
+                if (!show) continue;
+
+                var card = await CreateCatalogCardAsync(stock, available, isLeader: false);
+                flowCatalog.Controls.Add(card);
             }
         }
 
-        private async Task<Panel> CrearPanelStock(dynamic card)
+        private async Task<Panel> CreateCatalogCardAsync(CardStock stock, int available, bool isLeader)
         {
             var panel = new Panel
             {
-                Width = 180,
-                Height = 250,
-                BackColor = Color.White,
+                Width = 200,
+                Height = 285,
                 Margin = new Padding(10),
+                BackColor = Color.White,
                 BorderStyle = BorderStyle.FixedSingle
             };
 
             var pic = new PictureBox
             {
                 Dock = DockStyle.Top,
-                Height = 140,
+                Height = 165,
                 SizeMode = PictureBoxSizeMode.Zoom
             };
-
-            await ImageUtils.CargarImagenAsync(pic, card.cardImage);
+            pic.Image = await LoadImageCachedAsync(stock.cardImage);
 
             var lblName = new Label
             {
-                Text = card.cardName,
                 Dock = DockStyle.Top,
-                Font = new Font("Segoe UI", 9, FontStyle.Bold),
-                Height = 25,
-                TextAlign = ContentAlignment.MiddleCenter
+                Height = 42,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
+                AutoEllipsis = true,
+                Padding = new Padding(6, 6, 6, 0),
+                Text = stock.cardName
             };
 
-            var lblInfo = new Label
+            var lblAvail = new Label
             {
-                Text = $"Coste:{card.cost} | Counter:{card.counter} | {card.subType}\nID:{card.cardId}",
-                Dock = DockStyle.Bottom,
-                Font = new Font("Segoe UI", 8),
-                Height = 50,
-                TextAlign = ContentAlignment.MiddleCenter
+                Dock = DockStyle.Top,
+                Height = 26,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Font = new Font("Segoe UI", 9f, FontStyle.Bold),
+                Text = $"Disponible: {available}"
             };
 
-            panel.Controls.Add(lblInfo);
+            var lblMeta = new Label
+            {
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.TopCenter,
+                Font = new Font("Segoe UI", 8.5f, FontStyle.Regular),
+                ForeColor = Color.DimGray,
+                Padding = new Padding(6, 4, 6, 6),
+                Text = $"{stock.cardId}\n{stock.color} · Coste:{stock.cost} · Counter:{stock.counter}\n{stock.subType}"
+            };
+
+            panel.Controls.Add(lblMeta);
+            panel.Controls.Add(lblAvail);
             panel.Controls.Add(lblName);
             panel.Controls.Add(pic);
 
-            // Click para añadir carta
-            panel.Click += (s, e) => AgregarCartaAlDeck(card.Id);
-            pic.Click += (s, e) => AgregarCartaAlDeck(card.Id);
-            lblName.Click += (s, e) => AgregarCartaAlDeck(card.Id);
-            lblInfo.Click += (s, e) => AgregarCartaAlDeck(card.Id);
+            bool enabled = available > 0;
+
+            if (!enabled)
+            {
+                panel.BackColor = Color.Gainsboro;
+                lblAvail.ForeColor = Color.DarkRed;
+            }
+
+            void OnClickAdd(object s, EventArgs e)
+            {
+                if (!enabled)
+                {
+                    MessageBox.Show("No hay stock disponible para esta carta.", "Sin stock",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                if (isLeader)
+                {
+                    SelectLeader(stock.Id);
+                }
+                else
+                {
+                    AddCard(stock.Id);
+                }
+            }
+
+            panel.Click += OnClickAdd;
+            pic.Click += OnClickAdd;
+            lblName.Click += OnClickAdd;
+            lblAvail.Click += OnClickAdd;
+            lblMeta.Click += OnClickAdd;
 
             return panel;
         }
 
-        private void AgregarCartaAlDeck(Guid cardStockId)
+        // ============================
+        // Acciones: Leader
+        // ============================
+        private void SelectLeader(Guid leaderId)
         {
-            var deckCard = _deckCardsInMemory
-                .FirstOrDefault(dc => dc.cardStockId == cardStockId);
+            // Si es el mismo, nada
+            if (_selectedLeaderId.HasValue && _selectedLeaderId.Value == leaderId) return;
 
-            var stockCard = _db.CardStock.First(c => c.Id == cardStockId);
-            int maxUnits = stockCard.units;
-
-            if (deckCard != null)
+            // ¿hay disponible? (ya descontando editor)
+            int available = GetAvailable(leaderId);
+            if (available <= 0)
             {
-                if (deckCard.quantity < maxUnits)
-                    deckCard.quantity++;
-            }
-            else
-            {
-                deckCard = new DeckCard
-                {
-                    deckId = _deck.Id, // Temporal, solo para referencia, no se guarda aún
-                    cardStockId = cardStockId,
-                    quantity = 1
-                };
-                _deckCardsInMemory.Add(deckCard);
+                MessageBox.Show("No hay stock disponible para seleccionar este líder.", "Sin stock",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
             }
 
-            LoadDeckCardsFromMemory();
-            UpdateTotalCards();
+            _selectedLeaderId = leaderId;
+
+            // refrescar UI
+            _ = RefreshAllAsync();
         }
 
-        private void LoadDeckCardsFromMemory()
+        private void btnClearLeader_Click(object sender, EventArgs e)
         {
-            var cards = _deckCardsInMemory
-                .Select(dc => {
-                    var cardName = dc.CardStock != null
-                        ? dc.CardStock.cardName
-                        : _db.CardStock.First(c => c.Id == dc.cardStockId).cardName;
-
-                    return new
-                    {
-                        dc.cardStockId,
-                        cardName,
-                        dc.quantity
-                    };
-                })
-                .ToList();
-
-            dgvDeck.DataSource = cards;
+            _selectedLeaderId = null;
+            _ = RefreshAllAsync();
         }
 
-        #endregion
-
-        #region Deck DataGridView
-
-        private void LoadDeckCards()
+        // ============================
+        // Acciones: Cards
+        // ============================
+        private void AddCard(Guid cardId)
         {
-            var cards = _db.DeckCards
-                .Where(dc => dc.deckId == _deck.Id)
-                .Select(dc => new
-                {
-                    dc.Id,
-                    dc.cardStockId,
-                    dc.CardStock.cardName,
-                    dc.quantity
-                })
-                .ToList();
-
-            dgvDeck.DataSource = cards;
-        }
-
-        #endregion
-
-        #region Líderes
-
-        private async Task LoadLeadersAsync()
-        {
-            flowLeaders.Controls.Clear();
-
-            var leaders = _db.CardStock
-                .Where(c => c.type == "Leader")
-                .OrderBy(c => c.cardName)
-                .ToList();
-
-            foreach (var leader in leaders)
+            // regla: max 50 (sin líder)
+            if (TotalNonLeaderCardsInEditor() >= MAX_DECK_CARDS)
             {
-                var panel = new Panel
-                {
-                    Width = 80,
-                    Height = 100,
-                    BackColor = Color.LightGray,
-                    Margin = new Padding(5),
-                    BorderStyle = BorderStyle.FixedSingle
-                };
-
-                var pic = new PictureBox
-                {
-                    Dock = DockStyle.Top,
-                    Height = 60,
-                    SizeMode = PictureBoxSizeMode.Zoom
-                };
-
-                await ImageUtils.CargarImagenAsync(pic, leader.cardImage);
-
-                var lblName = new Label
-                {
-                    Text = leader.cardName,
-                    Dock = DockStyle.Bottom,
-                    Font = new Font("Segoe UI", 8, FontStyle.Bold),
-                    Height = 20,
-                    TextAlign = ContentAlignment.MiddleCenter
-                };
-
-                panel.Controls.Add(lblName);
-                panel.Controls.Add(pic);
-
-                panel.Click += (s, e) => SeleccionarLeader(leader, panel);
-                pic.Click += (s, e) => SeleccionarLeader(leader, panel);
-                lblName.Click += (s, e) => SeleccionarLeader(leader, panel);
-
-                flowLeaders.Controls.Add(panel);
-
-                // Si este líder ya está seleccionado
-                if (_deck.leaderCardId.HasValue && _deck.leaderCardId.Value == leader.Id)
-                    SeleccionarLeader(leader, panel);
+                MessageBox.Show($"No puedes añadir más de {MAX_DECK_CARDS} cartas al deck (sin contar el líder).",
+                    "Límite de deck", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
             }
+
+            // regla: max 4 copias
+            int current = _cards.TryGetValue(cardId, out var q) ? q : 0;
+            if (current >= MAX_COPIES_PER_CARD)
+            {
+                MessageBox.Show($"No puedes añadir más de {MAX_COPIES_PER_CARD} copias de la misma carta.",
+                    "Límite por carta", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // stock disponible (ya descontando editor)
+            int available = GetAvailable(cardId);
+            if (available <= 0)
+            {
+                MessageBox.Show("No hay stock disponible para esta carta.", "Sin stock",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            _cards[cardId] = current + 1;
+
+            _ = RefreshAllAsync();
         }
 
-        private void SeleccionarLeader(CardStock leader, Panel panel)
+        private void IncreaseCard(Guid cardId)
         {
-            _deck.leaderCardId = leader.Id;
-
-            if (_selectedLeaderPanel != null)
-                _selectedLeaderPanel.BorderStyle = BorderStyle.FixedSingle;
-
-            panel.BorderStyle = BorderStyle.Fixed3D;
-            _selectedLeaderPanel = panel;
+            AddCard(cardId);
         }
 
-        #endregion
-
-        #region Total cartas y botones
-
-        private void UpdateTotalCards()
+        private void DecreaseCard(Guid cardId)
         {
-            int total = _db.DeckCards
-                .Where(dc => dc.deckId == _deck.Id)
-                .Sum(dc => (int?)dc.quantity) ?? 0;
+            if (!_cards.TryGetValue(cardId, out var q)) return;
+            if (q <= 1) _cards.Remove(cardId);
+            else _cards[cardId] = q - 1;
 
-            lblTotalCards.Text = $"Total cartas: {total} / 50";
+            _ = RefreshAllAsync();
         }
 
+        private void RemoveCard(Guid cardId)
+        {
+            if (_cards.ContainsKey(cardId))
+                _cards.Remove(cardId);
+
+            _ = RefreshAllAsync();
+        }
+
+        private async Task RefreshAllAsync()
+        {
+            await ReloadDeckViewAsync();
+            await ReloadLeaderStripAsync();
+            await ReloadCatalogAsync();
+        }
+
+        // ============================
+        // Guardar
+        // ============================
         private void btnSave_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtDeckName.Text))
@@ -345,30 +599,185 @@ namespace OnePieceTCG_Manager.Decks
                 return;
             }
 
-            _deck.deckName = txtDeckName.Text.Trim();
-            _deck.lastUpdatedDate = DateTime.Now;
+            if (!_selectedLeaderId.HasValue)
+            {
+                MessageBox.Show("Debes seleccionar un líder.", "Falta líder", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
-            if (_deck.Id == Guid.Empty)
-                _db.Decks.Add(_deck);
+            // Validación stock final (por si cambió desde que abriste)
+            if (!ValidateEditorStock())
+                return;
 
-            _db.SaveChanges();
+            using (var tx = _db.Database.BeginTransaction())
+            {
+                try
+                {
+                    // 1) Asegurar deck
+                    _deck.deckName = txtDeckName.Text.Trim();
+                    _deck.lastUpdatedDate = DateTime.Now;
+                    _deck.leaderCardId = _selectedLeaderId.Value;
 
-            // Guardar las cartas en la DB
-            foreach (var dc in _deckCardsInMemory)
-                dc.deckId = _deck.Id;
+                    if (_deck.Id == Guid.Empty)
+                        _db.Decks.Add(_deck);
 
-            _db.DeckCards.AddRange(_deckCardsInMemory);
-            _db.SaveChanges();
+                    _db.SaveChanges();
 
-            MessageBox.Show("Deck guardado correctamente", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            Close();
+                    // 2) Releer estado anterior desde DB (para deltas reales)
+                    var oldLeaderId = _dbLeaderId; // el que cargamos inicialmente
+                    var oldDeckCards = _db.DeckCards.Where(dc => dc.deckId == _deck.Id).ToList();
+                    var oldMap = oldDeckCards.GroupBy(dc => dc.cardStockId).ToDictionary(g => g.Key, g => g.Sum(x => x.quantity));
+
+                    // incluir líder (1)
+                    if (oldLeaderId.HasValue)
+                        oldMap[oldLeaderId.Value] = (oldMap.TryGetValue(oldLeaderId.Value, out var qOldLeader) ? qOldLeader : 0) + 1;
+
+                    // 3) Nuevo map (editor) incluyendo líder (1)
+                    var newMap = _cards.ToDictionary(k => k.Key, v => v.Value);
+                    newMap[_selectedLeaderId.Value] = (newMap.TryGetValue(_selectedLeaderId.Value, out var qNewLeader) ? qNewLeader : 0) + 1;
+
+                    // 4) Deltas usedCards
+                    var allIds = oldMap.Keys.Union(newMap.Keys).ToList();
+                    var stocks = _db.CardStock.Where(c => allIds.Contains(c.Id)).ToList();
+
+                    foreach (var st in stocks)
+                    {
+                        int oldQty = oldMap.TryGetValue(st.Id, out var oq) ? oq : 0;
+                        int newQty = newMap.TryGetValue(st.Id, out var nq) ? nq : 0;
+                        int delta = newQty - oldQty;
+
+                        if (delta != 0)
+                        {
+                            int updated = st.usedCards + delta;
+                            if (updated < 0) updated = 0;
+                            if (updated > st.units)
+                                throw new InvalidOperationException($"Stock insuficiente al guardar: {st.cardName} (units={st.units}, used={st.usedCards}, delta={delta})");
+
+                            st.usedCards = updated;
+                            st.lastUpdatedCardDate = DateTime.Now;
+                        }
+                    }
+
+                    // 5) Sincronizar DeckCards (sin líder)
+                    //    - update / insert / delete
+                    var newNonLeader = _cards.ToDictionary(k => k.Key, v => v.Value);
+
+                    // delete los que ya no están
+                    foreach (var old in oldDeckCards)
+                    {
+                        if (!newNonLeader.ContainsKey(old.cardStockId))
+                            _db.DeckCards.Remove(old);
+                    }
+
+                    // upsert
+                    foreach (var kv in newNonLeader)
+                    {
+                        var existing = oldDeckCards.FirstOrDefault(x => x.cardStockId == kv.Key);
+                        if (existing != null)
+                            existing.quantity = kv.Value;
+                        else
+                        {
+                            _db.DeckCards.Add(new DeckCard
+                            {
+                                deckId = _deck.Id,
+                                cardStockId = kv.Key,
+                                quantity = kv.Value
+                            });
+                        }
+                    }
+
+                    // 6) Guardar cambios
+                    _db.SaveChanges();
+                    tx.Commit();
+
+                    MessageBox.Show("Deck guardado correctamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    Close();
+                }
+                catch (Exception ex)
+                {
+                    tx.Rollback();
+                    MessageBox.Show("Error guardando deck:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
         }
 
-        private void btnCancel_Click(object sender, EventArgs e)
+        private bool ValidateEditorStock()
         {
-            Close();
+            // Revalidación contra DB actual por si han cambiado stocks/usos
+            // Cargamos stock actualizado para estas cartas
+            var ids = _cards.Keys.ToList();
+            if (_selectedLeaderId.HasValue) ids.Add(_selectedLeaderId.Value);
+
+            ids = ids.Distinct().ToList();
+
+            var freshStocks = _db.CardStock.Where(c => ids.Contains(c.Id)).ToList();
+            var freshById = freshStocks.ToDictionary(x => x.Id, x => x);
+
+            // old reserved para excluir deck actual (si editas)
+            // usamos _dbCards / _dbLeaderId que reflejan el estado al abrir
+            foreach (var id in ids)
+            {
+                if (!freshById.TryGetValue(id, out var stock))
+                {
+                    MessageBox.Show("Hay cartas del deck que ya no existen en stock.", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
+
+                int usedElsewhere = stock.usedCards - GetDbReserved(id);
+                if (usedElsewhere < 0) usedElsewhere = 0;
+
+                int need = GetEditorReserved(id);
+                int available = stock.units - usedElsewhere - need;
+
+                if (available < 0)
+                {
+                    MessageBox.Show(
+                        $"No hay stock suficiente para guardar.\n\nCarta: {stock.cardName}\nNecesitas: {need}\nDisponible real: {stock.units - usedElsewhere}",
+                        "Stock insuficiente", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return false;
+                }
+
+                if (!(_selectedLeaderId.HasValue) && string.Equals(stock.type, "Leader", StringComparison.OrdinalIgnoreCase))
+                {
+                    MessageBox.Show("Debes seleccionar un líder.", "Falta líder",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return false;
+                }
+
+                if (_cards.TryGetValue(id, out var q) && q > MAX_COPIES_PER_CARD)
+                {
+                    MessageBox.Show($"Carta {stock.cardName} supera el máximo de {MAX_COPIES_PER_CARD} copias.", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return false;
+                }
+            }
+
+            if (TotalNonLeaderCardsInEditor() > MAX_DECK_CARDS)
+            {
+                MessageBox.Show($"El deck supera {MAX_DECK_CARDS} cartas (sin contar el líder).", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            return true;
         }
 
-        #endregion
+        // ============================
+        // Imagen cache
+        // ============================
+        private async Task<Image> LoadImageCachedAsync(string pathOrUrl)
+        {
+            if (string.IsNullOrWhiteSpace(pathOrUrl)) return null;
+
+            if (_imgCache.TryGetValue(pathOrUrl, out var cached))
+                return cached;
+
+            var img = await ImageLoader.TryLoadImageAsync(pathOrUrl);
+            if (img != null)
+                _imgCache[pathOrUrl] = img;
+
+            return img;
+        }
     }
 }

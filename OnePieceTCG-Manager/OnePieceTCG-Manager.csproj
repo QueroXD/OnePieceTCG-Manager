@@ -157,6 +157,12 @@
     </Compile>
     <Compile Include="Utils\ImageUtils.cs" />
     <Compile Include="Utils\NasCardImageService.cs" />
+    <EmbeddedResource Include="Decks\FrmDeckEditor.resx">
+      <DependentUpon>FrmDeckEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Decks\FrmMyDecks.resx">
+      <DependentUpon>FrmMyDecks.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="FrmLogin.resx">
       <DependentUpon>FrmLogin.cs</DependentUpon>
     </EmbeddedResource>
