@@ -149,6 +149,8 @@
     <Compile Include="Models\Usuarios.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\OnePieceApiCardService.cs" />
+    <Compile Include="Utils\ApiCardImageService.cs" />
     <Compile Include="Utils\FrmModal.cs">
       <SubType>Form</SubType>
     </Compile>

@@ -1,11 +1,9 @@
-﻿using Newtonsoft.Json;
-using OnePieceTCG_Manager.Data;
+﻿using OnePieceTCG_Manager.Data;
 using OnePieceTCG_Manager.Models;
-using OnePieceTCG_Manager.Utils;
+using OnePieceTCG_Manager.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -13,9 +11,8 @@ namespace OnePieceTCG_Manager.Gestion
 {
     public partial class FrmAddStock : Form
     {
-        public string BaseURL = "http://192.168.1.12:48123/";
-
-        private OnePieceContext _db;
+        private readonly OnePieceApiCardService _cardService = new OnePieceApiCardService();
+        private readonly OnePieceContext _db;
 
         private bool _modoModificacion;
         private string _cardId;
@@ -58,8 +55,7 @@ namespace OnePieceTCG_Manager.Gestion
 
         private void FrmAddStock_FormClosed(object sender, FormClosedEventArgs e)
         {
-            if (_db != null)
-                _db.Dispose();
+            _db?.Dispose();
         }
 
         private void LoadCardFromDB()
@@ -106,71 +102,70 @@ namespace OnePieceTCG_Manager.Gestion
 
         private async Task LoadCardDataFromApiAsync(string cardId)
         {
-            using (HttpClient client = new HttpClient())
+            // ===== Obtener carta completa desde el servicio =====
+            var card = await _cardService.GetCardAsync(cardId);
+            if (card == null)
             {
-                HttpResponseMessage response =
-                    await client.GetAsync($"{BaseURL}card/{cardId}");
+                MessageBox.Show("No se encontró la carta en la API.");
+                return;
+            }
 
-                if (!response.IsSuccessStatusCode)
-                    return;
+            // ===== Llenar campos =====
+            inputCardName.Text = card.card_name;
+            inputSet.Text = card.set_name;
+            inputRarity.Text = card.rarity;
+            inputColor.Text = card.card_color;
+            inputCardType.Text = card.card_type;
+            inputCardSubType.Text = card.sub_types;
+            inputAtributo.Text = card.attribute;
+            inputPower.Text = card.card_power;
+            inputCost.Text = card.card_cost;
+            inputLifes.Text = card.life;
+            inputCounter.Text = card.counter_amount.HasValue
+                ? card.counter_amount.Value.ToString()
+                : "";
+            inputDescription.Text = card.card_text;
 
-                // AHORA es una sola carta, no una lista
-                var c = JsonConvert.DeserializeObject<CardApi>(
-                    await response.Content.ReadAsStringAsync());
+            // ===== Obtener imágenes =====
+            List<string> images;
+            if (isAlter.Checked)
+            {
+                images = await _cardService.GetAlterImagesAsync(cardId);
+            }
+            else
+            {
+                images = await _cardService.GetCardImagesAsync(cardId);
+            }
 
-                if (c == null)
-                    return;
+            if (images.Count == 0)
+            {
+                MessageBox.Show("No hay imágenes disponibles");
+                return;
+            }
 
-                // ===== Datos de la carta =====
-                inputCardName.Text = c.card_name;
-                inputSet.Text = c.set_name;
-                inputRarity.Text = c.rarity;
-                inputColor.Text = c.card_color;
-                inputCardType.Text = c.card_type;
-                inputCardSubType.Text = c.sub_types;
-                inputAtributo.Text = c.attribute;
-                inputPower.Text = c.card_power;
-                inputCost.Text = c.card_cost;
-                inputLifes.Text = c.life;
-                inputCounter.Text = c.counter_amount.HasValue
-                    ? c.counter_amount.Value.ToString()
-                    : "";
-                inputDescription.Text = c.card_text;
-
-                // ===== NAS (NO SE TOCA) =====
-                var images = NasCardImageService.GetImagesByCardId(cardId);
-
-                if (images.Count == 0)
+            // ===== Selección de alter si hay varias =====
+            string selectedImage = images[0];
+            if (isAlter.Checked && images.Count > 1)
+            {
+                using (FrmImageSelector selector = new FrmImageSelector(images))
                 {
-                    MessageBox.Show("No hay imágenes en el NAS");
-                    return;
-                }
-
-                string selectedImage = images[0];
-
-                if (isAlter.Checked && images.Count > 1)
-                {
-                    using (FrmImageSelector selector = new FrmImageSelector(images))
+                    if (selector.ShowDialog() == DialogResult.OK)
                     {
-                        if (selector.ShowDialog() == DialogResult.OK)
-                        {
-                            selectedImage = selector.SelectedImage;
-                        }
-                        else
-                        {
-                            return;
-                        }
+                        selectedImage = selector.SelectedImage;
+                    }
+                    else
+                    {
+                        return;
                     }
                 }
-
-                fotoCard.ImageLocation = selectedImage;
-                fotoCard.Load(selectedImage);
-
-                // ===== Inventario =====
-                CheckIfCardExists(cardId, isAlter.Checked, selectedImage);
             }
-        }
 
+            fotoCard.ImageLocation = selectedImage;
+            fotoCard.Load(selectedImage);
+
+            // ===== Inventario =====
+            CheckIfCardExists(cardId, isAlter.Checked, selectedImage);
+        }
 
         private void addButton_Click(object sender, EventArgs e)
         {
@@ -181,8 +176,6 @@ namespace OnePieceTCG_Manager.Gestion
                 c.cardId == cardId &&
                 c.isAlter == isAlter.Checked &&
                 c.cardImage == imagePath);
-
-
 
             if (existing != null)
             {
@@ -200,13 +193,9 @@ namespace OnePieceTCG_Manager.Gestion
             }
             else
             {
-                int cost;
-                int cnt;
-                int pwr;
-
-                int.TryParse(inputCost.Text, out cost);
-                int.TryParse(inputCounter.Text, out cnt);
-                int.TryParse(inputPower.Text, out pwr);
+                int cost = int.TryParse(inputCost.Text, out int c1) ? c1 : 0;
+                int cnt = int.TryParse(inputCounter.Text, out int c2) ? c2 : 0;
+                int pwr = int.TryParse(inputPower.Text, out int c3) ? c3 : 0;
 
                 _db.CardStock.Add(new CardStock
                 {
@@ -225,7 +214,7 @@ namespace OnePieceTCG_Manager.Gestion
                     description = inputDescription.Text,
                     units = (int)inputCantidad.Value,
                     cardImage = imagePath,
-                    usedCards = 0, // siempre 0 al crear
+                    usedCards = 0,
                     insertedCardDate = DateTime.Now,
                     lastUpdatedCardDate = DateTime.Now
                 });
@@ -242,7 +231,6 @@ namespace OnePieceTCG_Manager.Gestion
                 c.cardId == _cardId &&
                 c.isAlter == _isAlter &&
                 c.cardImage == _cardImage);
-
 
             if (card == null)
                 return;
@@ -277,7 +265,6 @@ namespace OnePieceTCG_Manager.Gestion
                 lblStatus.Visible = true;
                 lblStatus.ForeColor = System.Drawing.Color.Red;
                 lblStatus.Text = $"Ya en el inventario: {existing.units}";
-
                 inputCantidad.Value = existing.units;
             }
             else
@@ -288,6 +275,5 @@ namespace OnePieceTCG_Manager.Gestion
                 inputCantidad.Value = 0;
             }
         }
-
     }
 }
