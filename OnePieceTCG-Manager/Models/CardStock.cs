@@ -22,13 +22,13 @@ namespace OnePieceTCG_Manager.Models
         [StringLength(50)]
         public string rarity { get; set; }
 
-        [StringLength(50)]
+        [StringLength(100)]
         public string type { get; set; }
 
-        [StringLength(50)]
+        [StringLength(100)]
         public string subType { get; set; }
 
-        [StringLength(50)]
+        [StringLength(100)]
         public string attribute { get; set; }
 
         [StringLength(50)]
