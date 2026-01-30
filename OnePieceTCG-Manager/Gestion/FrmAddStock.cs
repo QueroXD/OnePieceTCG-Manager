@@ -222,7 +222,7 @@ namespace OnePieceTCG_Manager.Gestion
 
             _db.SaveChanges();
             MessageBox.Show("Carta guardada correctamente");
-            Close();
+            clearFrom();
         }
 
         private void confirmButton_Click(object sender, EventArgs e)
@@ -250,7 +250,7 @@ namespace OnePieceTCG_Manager.Gestion
             card.lastUpdatedCardDate = DateTime.Now;
 
             _db.SaveChanges();
-            Close();
+            clearFrom();
         }
 
         private void CheckIfCardExists(string cardId, bool isAlter, string imagePath)
@@ -274,6 +274,27 @@ namespace OnePieceTCG_Manager.Gestion
                 lblStatus.Text = $"NEW";
                 inputCantidad.Value = 0;
             }
+        }
+
+        private void clearFrom() 
+        {
+            inputCardID.Clear();
+            inputCardName.Clear();
+            inputRarity.Clear();
+            inputCardType.Clear();
+            inputCardSubType.Clear();
+            inputAtributo.Clear();
+            inputColor.Clear();
+            inputCost.Clear();
+            inputCounter.Clear();
+            inputLifes.Clear();
+            inputPower.Clear();
+            inputSet.Clear();
+            inputDescription.Clear();
+            inputCantidad.Value = 0;
+            isAlter.Checked = false;
+            fotoCard.Image = null;
+            lblStatus.Visible = false;
         }
     }
 }
