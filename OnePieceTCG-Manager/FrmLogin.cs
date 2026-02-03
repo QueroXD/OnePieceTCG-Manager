@@ -1,12 +1,14 @@
-﻿using OnePieceTCG_Manager.Data;
+﻿using OnePieceTCG_Manager.Services;
 using System;
-using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace OnePieceTCG_Manager
 {
     public partial class FrmLogin : Form
     {
+        private readonly UsuariosService _usuariosService = new UsuariosService();
+
         public string LoggedUserCodUsu { get; private set; }
         public string LoggedUserName { get; private set; }
 
@@ -14,17 +16,17 @@ namespace OnePieceTCG_Manager
         {
             InitializeComponent();
         }
-        private void FrmLogin_Load(object sender, EventArgs e)
+
+        private async void FrmLogin_Load(object sender, EventArgs e)
         {
-            AutoLogin();
+            await AutoLoginAsync();
         }
 
-        private void btnLogin_Click(object sender, EventArgs e)
+        private async void btnLogin_Click(object sender, EventArgs e)
         {
             string userName = inputUsername.Text.Trim();
             string password = inputPasswd.Text.Trim();
 
-            // Validación básica
             if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(password))
             {
                 MessageBox.Show("Por favor, introduce usuario y contraseña.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -33,49 +35,42 @@ namespace OnePieceTCG_Manager
 
             try
             {
-                using (var db = new OnePieceContext())
-                {
-                    // Buscar usuario en la base de datos
-                    var user = db.Usuarios.FirstOrDefault(u => u.userName == userName && u.passwd == password);
+                var usuario = await _usuariosService.LoginAsync(userName, password);
 
-                    if (user != null)
-                    {
-                        LoggedUserCodUsu = user.codUsu;
-                        LoggedUserName = user.userName;
-                        this.DialogResult = DialogResult.OK;
-                        this.Close();
-                    }
-                    else
-                    {
-                        MessageBox.Show("❌ Usuario o contraseña incorrectos", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
+                if (usuario != null)
+                {
+                    LoggedUserCodUsu = usuario.CodUsu;
+                    LoggedUserName = usuario.UserName;
+                    this.DialogResult = DialogResult.OK;
+                    this.Close();
+                }
+                else
+                {
+                    MessageBox.Show("❌ Usuario o contraseña incorrectos", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al conectar con la base de datos:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error conectando con la API:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        public void AutoLogin()
+        private async Task AutoLoginAsync()
         {
-            string currentHostname = System.Environment.MachineName;
+            string hostname = Environment.MachineName;
             try
             {
-                using (var db = new OnePieceContext())
+                var usuario = await _usuariosService.AutoLoginAsync(hostname);
+                if (usuario != null)
                 {
-                    var user = db.Usuarios.FirstOrDefault(u => u.hostname == currentHostname);
-                    if (user != null)
-                    {
-                        inputUsername.Text = user.userName;
-                        inputPasswd.Text = user.passwd;
-                        btnLogin.PerformClick();
-                    }
+                    inputUsername.Text = usuario.UserName;
+                    inputPasswd.Text = usuario.Passwd; 
+                    btnLogin.PerformClick();
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                MessageBox.Show($"Error al conectar con la base de datos:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // Ignoramos errores de autologin
             }
         }
     }

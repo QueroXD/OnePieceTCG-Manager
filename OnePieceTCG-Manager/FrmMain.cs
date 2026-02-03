@@ -1,7 +1,8 @@
-﻿using DiscordRPC;
-using OnePieceTCG_Manager.Decks;
+﻿using OnePieceTCG_Manager.Decks;
 using OnePieceTCG_Manager.Gestion;
+using OnePieceTCG_Manager.Services;
 using System;
+using System.Configuration;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows.Forms;
@@ -10,7 +11,6 @@ namespace OnePieceTCG_Manager
 {
     public partial class FrmMain : Form
     {
-        private DiscordRpcClient rpc;
         private readonly string _codUsu;
         private readonly string _userName;
 
@@ -24,107 +24,72 @@ namespace OnePieceTCG_Manager
         private void FrmMain_Load(object sender, EventArgs e)
         {
             this.Text = $"OPTCG Manager - {_userName}";
-            economiaToolStripMenuItem.Visible = false; // Ocultar el menú de economía por ahora
+            economiaToolStripMenuItem.Visible = false; // ocultar por ahora
 
-            InitDiscordRPC();  // 🔥 Inicializamos el Rich Presence
+            InitDiscordRPC();
         }
 
         // -----------------------------------------
-        // 🔵 Inicialización Rich Presence
+        // Abrir FrmAddStock usando API
         // -----------------------------------------
-        private void InitDiscordRPC()
-        {
-            try
-            {
-                rpc = new DiscordRpcClient("1439634178235826257");
-
-                rpc.Initialize();
-
-                rpc.SetPresence(new RichPresence()
-                {
-                    Details = "En el menú principal",
-                    State = "OPTCG Manager - By Quero",
-                    //Assets = new Assets()
-                    //{
-                    //    LargeImageKey = "icon_large",
-                    //    LargeImageText = "One Piece TCG",
-                    //    SmallImageKey = "icon_small",
-                    //    SmallImageText = "OPTCG Manager"
-                    //},
-                    Timestamps = Timestamps.Now
-                });
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error iniciando Discord RPC: " + ex.Message);
-            }
-        }
-
-        // -----------------------------------------
-        // 🔵 Actualizar Presence según lo que hace el usuario
-        // -----------------------------------------
-        private void UpdateRPC(string details, string state = "OPTCG Manager")
-        {
-            if (rpc != null && rpc.IsInitialized)
-            {
-                rpc.UpdateDetails(details);
-            }
-        }
-
         private void añadirStockToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var frm = Application.OpenForms.OfType<FrmAddStock>().FirstOrDefault();
-
             if (frm == null)
             {
-                frm = new FrmAddStock { MdiParent = this };
+                frm = new FrmAddStock()
+                {
+                    MdiParent = this
+                };
                 frm.Show();
             }
             else
             {
                 frm.BringToFront();
             }
-
-            UpdateRPC("Añadiendo stock");   // 🔥 Actualiza Rich Presence
+            UpdateRPC("Añadiendo stock");
         }
 
+        // -----------------------------------------
+        // Abrir FrmVerStock usando API
+        // -----------------------------------------
         private void verStockToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var frm = Application.OpenForms.OfType<FrmVerStock>().FirstOrDefault();
-
             if (frm == null)
             {
-                frm = new FrmVerStock { MdiParent = this };
+                frm = new FrmVerStock()
+                {
+                    MdiParent = this
+                };
                 frm.Show();
             }
             else
             {
                 frm.BringToFront();
             }
-
-            UpdateRPC("Viendo el inventario");  // 🔥
+            UpdateRPC("Viendo el inventario");
         }
 
-        private void testConexiónToolStripMenuItem_Click(object sender, EventArgs e)
+        // -----------------------------------------
+        // Abrir FrmMyDecks usando API
+        // -----------------------------------------
+        private void decksToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            using (var context = new Data.OnePieceContext())
+            var frm = Application.OpenForms.OfType<FrmMyDecks>().FirstOrDefault();
+            if (frm == null)
             {
-                try
+                frm = new FrmMyDecks(_codUsu)
                 {
-                    context.Database.Connection.Open();
-                    MessageBox.Show("Conexión exitosa a la base de datos.",
-                                    "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                    UpdateRPC("Probando conexión a la base de datos");
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Error al conectar: {ex.Message}",
-                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
-                    UpdateRPC("Error al probar conexión");
-                }
+                    MdiParent = this
+                };
+                frm.Show();
             }
+            else
+            {
+                frm.BringToFront();
+            }
+            UpdateRPC("Mis Decks");
         }
 
         private void salirToolStripMenuItem_Click(object sender, EventArgs e)
@@ -137,28 +102,31 @@ namespace OnePieceTCG_Manager
             Process.Start("explorer.exe", @"\\192.168.1.50\OnePieceTCG");
         }
 
-        private void decksToolStripMenuItem_Click(object sender, EventArgs e)
+        // 🔵 Rich Presence (igual)
+        private DiscordRPC.DiscordRpcClient rpc;
+        private void InitDiscordRPC()
         {
-            // Buscamos si ya hay un FrmMyDecks abierto
-            var frm = Application.OpenForms.OfType<FrmMyDecks>().FirstOrDefault();
-
-            if (frm == null)
+            try
             {
-                // Si no hay, lo creamos
-                frm = new FrmMyDecks(_codUsu)
+                rpc = new DiscordRPC.DiscordRpcClient("1439634178235826257");
+                rpc.Initialize();
+                rpc.SetPresence(new DiscordRPC.RichPresence()
                 {
-                    MdiParent = this
-                };
-                frm.Show();
+                    Details = "En el menú principal",
+                    State = "OPTCG Manager - By Quero",
+                    Timestamps = DiscordRPC.Timestamps.Now
+                });
             }
-            else
+            catch (Exception ex)
             {
-                // Si ya está abierto, lo traemos al frente
-                frm.BringToFront();
+                MessageBox.Show("Error iniciando Discord RPC: " + ex.Message);
             }
-
-            UpdateRPC("Mis Decks");  // 🔥 Actualiza estado o RPC
         }
 
+        private void UpdateRPC(string details, string state = "OPTCG Manager")
+        {
+            if (rpc != null && rpc.IsInitialized)
+                rpc.UpdateDetails(details);
+        }
     }
 }

@@ -1,5 +1,4 @@
-﻿using OnePieceTCG_Manager.Data;
-using OnePieceTCG_Manager.Models;
+﻿using OnePieceTCG_Manager.Models;
 using OnePieceTCG_Manager.Services;
 using System;
 using System.Collections.Generic;
@@ -12,7 +11,7 @@ namespace OnePieceTCG_Manager.Gestion
     public partial class FrmAddStock : Form
     {
         private readonly OnePieceApiCardService _cardService = new OnePieceApiCardService();
-        private readonly OnePieceContext _db;
+        private readonly CardStockService _stockService = new CardStockService();
 
         private bool _modoModificacion;
         private string _cardId;
@@ -24,7 +23,6 @@ namespace OnePieceTCG_Manager.Gestion
             InitializeComponent();
             lblStatus.Visible = false;
 
-            _db = new OnePieceContext();
             this.FormClosed += FrmAddStock_FormClosed;
         }
 
@@ -36,7 +34,7 @@ namespace OnePieceTCG_Manager.Gestion
             _isAlter = isAlter;
             _cardImage = cardImage;
 
-            LoadCardFromDB();
+            LoadCardFromApiStockAsync().Wait();
 
             addButton.Visible = false;
             confirmButton.Visible = true;
@@ -55,19 +53,20 @@ namespace OnePieceTCG_Manager.Gestion
 
         private void FrmAddStock_FormClosed(object sender, FormClosedEventArgs e)
         {
-            _db?.Dispose();
+            // nada que cerrar ahora, todo es API
         }
 
-        private void LoadCardFromDB()
+        private async Task LoadCardFromApiStockAsync()
         {
-            var card = _db.CardStock.FirstOrDefault(c =>
+            var allCards = await _stockService.GetAllAsync();
+            var card = allCards.FirstOrDefault(c =>
                 c.cardId == _cardId &&
                 c.isAlter == _isAlter &&
                 c.cardImage == _cardImage);
 
             if (card == null)
             {
-                MessageBox.Show("No se encontró la carta.");
+                MessageBox.Show("No se encontró la carta en el stock.");
                 Close();
                 return;
             }
@@ -76,6 +75,7 @@ namespace OnePieceTCG_Manager.Gestion
             lblStatus.BackColor = System.Drawing.Color.Yellow;
             lblStatus.Text = "Unidades existentes: " + card.units;
 
+            // llenar campos
             inputCardID.Text = card.cardId;
             inputCardName.Text = card.cardName;
             inputRarity.Text = card.rarity;
@@ -102,7 +102,6 @@ namespace OnePieceTCG_Manager.Gestion
 
         private async Task LoadCardDataFromApiAsync(string cardId)
         {
-            // ===== Obtener carta completa desde el servicio =====
             var card = await _cardService.GetCardAsync(cardId);
             if (card == null)
             {
@@ -110,7 +109,6 @@ namespace OnePieceTCG_Manager.Gestion
                 return;
             }
 
-            // ===== Llenar campos =====
             inputCardName.Text = card.card_name;
             inputSet.Text = card.set_name;
             inputRarity.Text = card.rarity;
@@ -126,16 +124,11 @@ namespace OnePieceTCG_Manager.Gestion
                 : "";
             inputDescription.Text = card.card_text;
 
-            // ===== Obtener imágenes =====
             List<string> images;
             if (isAlter.Checked)
-            {
                 images = await _cardService.GetAlterImagesAsync(cardId);
-            }
             else
-            {
                 images = await _cardService.GetCardImagesAsync(cardId);
-            }
 
             if (images.Count == 0)
             {
@@ -143,36 +136,31 @@ namespace OnePieceTCG_Manager.Gestion
                 return;
             }
 
-            // ===== Selección de alter si hay varias =====
             string selectedImage = images[0];
             if (isAlter.Checked && images.Count > 1)
             {
-                using (FrmImageSelector selector = new FrmImageSelector(images))
+                using (var selector = new FrmImageSelector(images))
                 {
                     if (selector.ShowDialog() == DialogResult.OK)
-                    {
                         selectedImage = selector.SelectedImage;
-                    }
                     else
-                    {
                         return;
-                    }
                 }
             }
 
             fotoCard.ImageLocation = selectedImage;
             fotoCard.Load(selectedImage);
 
-            // ===== Inventario =====
             CheckIfCardExists(cardId, isAlter.Checked, selectedImage);
         }
 
-        private void addButton_Click(object sender, EventArgs e)
+        private async void addButton_Click(object sender, EventArgs e)
         {
             string cardId = inputCardID.Text.Trim();
             string imagePath = fotoCard.ImageLocation;
 
-            var existing = _db.CardStock.FirstOrDefault(c =>
+            var allCards = await _stockService.GetAllAsync();
+            var existing = allCards.FirstOrDefault(c =>
                 c.cardId == cardId &&
                 c.isAlter == isAlter.Checked &&
                 c.cardImage == imagePath);
@@ -189,7 +177,7 @@ namespace OnePieceTCG_Manager.Gestion
                     return;
                 }
                 existing.units = (int)inputCantidad.Value;
-                existing.lastUpdatedCardDate = DateTime.Now;
+                await _stockService.UpdateUnitsAsync(existing.Id, existing.units);
             }
             else
             {
@@ -197,7 +185,7 @@ namespace OnePieceTCG_Manager.Gestion
                 int cnt = int.TryParse(inputCounter.Text, out int c2) ? c2 : 0;
                 int pwr = int.TryParse(inputPower.Text, out int c3) ? c3 : 0;
 
-                _db.CardStock.Add(new CardStock
+                var card = new CardStock
                 {
                     cardId = cardId,
                     cardName = inputCardName.Text,
@@ -210,52 +198,53 @@ namespace OnePieceTCG_Manager.Gestion
                     counter = cnt,
                     power = pwr,
                     setDesc = inputSet.Text,
-                    isAlter = isAlter.Checked,
                     description = inputDescription.Text,
                     units = (int)inputCantidad.Value,
                     cardImage = imagePath,
-                    usedCards = 0,
-                    insertedCardDate = DateTime.Now,
-                    lastUpdatedCardDate = DateTime.Now
-                });
+                    isAlter = isAlter.Checked,
+                    usedCards = 0
+                };
+
+                await _stockService.CreateAsync(card);
             }
 
-            _db.SaveChanges();
             MessageBox.Show("Carta guardada correctamente");
-            clearFrom();
+            clearForm();
         }
 
-        private void confirmButton_Click(object sender, EventArgs e)
+        private async void confirmButton_Click(object sender, EventArgs e)
         {
-            var card = _db.CardStock.FirstOrDefault(c =>
+            var allCards = await _stockService.GetAllAsync();
+            var existing = allCards.FirstOrDefault(c =>
                 c.cardId == _cardId &&
                 c.isAlter == _isAlter &&
                 c.cardImage == _cardImage);
 
-            if (card == null)
-                return;
+            if (existing == null) return;
 
-            if (card.usedCards > inputCantidad.Value)
+            if (existing.usedCards > inputCantidad.Value)
             {
                 MessageBox.Show(
-                    $"No puedes reducir las unidades por debajo de las cartas en uso ({card.usedCards}).",
+                    $"No puedes reducir las unidades por debajo de las cartas en uso ({existing.usedCards}).",
                     "Stock en uso",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
                 return;
             }
 
-            card.units = (int)inputCantidad.Value;
-            card.description = inputDescription.Text;
-            card.lastUpdatedCardDate = DateTime.Now;
+            existing.units = (int)inputCantidad.Value;
+            existing.description = inputDescription.Text;
 
-            _db.SaveChanges();
-            clearFrom();
+            await _stockService.UpdateAsync(existing.Id, existing);
+
+            clearForm();
         }
 
         private void CheckIfCardExists(string cardId, bool isAlter, string imagePath)
         {
-            var existing = _db.CardStock.FirstOrDefault(c =>
+            var existingTask = _stockService.GetAllAsync();
+            existingTask.Wait();
+            var existing = existingTask.Result.FirstOrDefault(c =>
                 c.cardId == cardId &&
                 c.isAlter == isAlter &&
                 c.cardImage == imagePath);
@@ -276,7 +265,7 @@ namespace OnePieceTCG_Manager.Gestion
             }
         }
 
-        private void clearFrom() 
+        private void clearForm()
         {
             inputCardID.Clear();
             inputCardName.Clear();

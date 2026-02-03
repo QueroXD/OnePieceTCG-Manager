@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using OnePieceTCG_Manager.Models;
+using OnePieceTCG_Manager.Properties;
 
 namespace OnePieceTCG_Manager.Services
 {
@@ -11,7 +12,7 @@ namespace OnePieceTCG_Manager.Services
     {
         private readonly HttpClient _httpClient = new HttpClient
         {
-            BaseAddress = new Uri("https://optcgapi.aquero.es/")
+            BaseAddress = new Uri(Settings.Default.card_api)
         };
 
         public OnePieceApiCardService() { }

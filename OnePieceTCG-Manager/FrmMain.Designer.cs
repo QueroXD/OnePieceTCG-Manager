@@ -74,7 +74,6 @@
             this.testConexiónToolStripMenuItem.Name = "testConexiónToolStripMenuItem";
             this.testConexiónToolStripMenuItem.Size = new System.Drawing.Size(208, 26);
             this.testConexiónToolStripMenuItem.Text = "Test Conexión";
-            this.testConexiónToolStripMenuItem.Click += new System.EventHandler(this.testConexiónToolStripMenuItem_Click);
             // 
             // carpetaDeCartasToolStripMenuItem
             // 

@@ -87,7 +87,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Data\OnePieceContext.cs" />
     <Compile Include="Decks\FrmDeckEditor.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -147,9 +146,14 @@
     <Compile Include="Models\DeckCard.cs" />
     <Compile Include="Models\Decks.cs" />
     <Compile Include="Models\Usuarios.cs" />
+    <Compile Include="OnePieceContext.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\CardStockService.cs" />
+    <Compile Include="Services\DeckCardService.cs" />
+    <Compile Include="Services\DecksService.cs" />
     <Compile Include="Services\OnePieceApiCardService.cs" />
+    <Compile Include="Services\UsuariosService.cs" />
     <Compile Include="Utils\FrmModal.cs">
       <SubType>Form</SubType>
     </Compile>
