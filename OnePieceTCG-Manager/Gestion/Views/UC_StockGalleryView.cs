@@ -1,5 +1,6 @@
 ﻿using OnePieceTCG_Manager.Models;
 using OnePieceTCG_Manager.Utils;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Threading.Tasks;
@@ -9,6 +10,8 @@ namespace OnePieceTCG_Manager.Gestion.Views
 {
     public partial class UC_StockGalleryView : UserControl
     {
+        public event Action<CardStock> CardDoubleClicked;
+
         public UC_StockGalleryView()
         {
             InitializeComponent();
@@ -33,7 +36,8 @@ namespace OnePieceTCG_Manager.Gestion.Views
                 Height = 250,
                 BackColor = Color.White,
                 Margin = new Padding(10),
-                BorderStyle = BorderStyle.FixedSingle
+                BorderStyle = BorderStyle.FixedSingle,
+                Tag = card
             };
 
             var pic = new PictureBox
@@ -68,24 +72,12 @@ namespace OnePieceTCG_Manager.Gestion.Views
             panel.Controls.Add(lblName);
             panel.Controls.Add(pic);
 
-            // eventos
-            panel.Click += (s, e) => AbrirEditor(card);
-            pic.Click += (s, e) => AbrirEditor(card);
-            lblName.Click += (s, e) => AbrirEditor(card);
-            lblUnits.Click += (s, e) => AbrirEditor(card);
+            panel.DoubleClick += (s, e) => CardDoubleClicked?.Invoke(card);
+            pic.DoubleClick += (s, e) => CardDoubleClicked?.Invoke(card);
+            lblName.DoubleClick += (s, e) => CardDoubleClicked?.Invoke(card);
+            lblUnits.DoubleClick += (s, e) => CardDoubleClicked?.Invoke(card);
 
             return panel;
-        }
-
-        private void AbrirEditor(CardStock card)
-        {
-            var frm = new FrmAddStock(
-                card.cardId,
-                card.isAlter,
-                card.cardImage,
-                modoSoloUnidades: true);
-
-            frm.ShowDialog();
         }
     }
 }

@@ -451,6 +451,7 @@
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Añadir Stock";
+            this.Load += new System.EventHandler(this.FrmAddStock_Load);
             ((System.ComponentModel.ISupportInitialize)(this.fotoCard)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.addButton)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.delButton)).EndInit();

@@ -14,32 +14,53 @@ namespace OnePieceTCG_Manager.Services
     {
         private readonly HttpClient _http;
 
+        private List<CardStock> _cache;
+        private bool _isLoaded;
+
         public CardStockService()
         {
-            _http = new HttpClient { BaseAddress = new Uri(Settings.Default.db_api) };
+            _http = new HttpClient
+            {
+                BaseAddress = new Uri(Settings.Default.db_api)
+            };
         }
 
-        public async Task<List<CardStock>> GetAllAsync()
+        // --------------------------
+        // Carga cache si no existe
+        // --------------------------
+        public async Task<List<CardStock>> GetAllAsync(bool forceReload = false)
         {
+            if (_isLoaded && !forceReload)
+                return _cache;
+
             var response = await _http.GetAsync("/CardStock");
             if (!response.IsSuccessStatusCode)
                 return new List<CardStock>();
 
             var json = await response.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<List<CardStock>>(json);
+            _cache = JsonConvert.DeserializeObject<List<CardStock>>(json) ?? new List<CardStock>();
+            _isLoaded = true;
+
+            return _cache;
         }
 
-        public async Task<CardStock> GetByIdAsync(Guid id)
+        // --------------------------
+        // Obtener una carta del cache
+        // --------------------------
+        public async Task<CardStock> GetByKeyAsync(string cardId, bool isAlter, string cardImage)
         {
-            var response = await _http.GetAsync($"/CardStock/{id}");
-            if (!response.IsSuccessStatusCode)
-                return null;
+            var all = await GetAllAsync();
 
-            var json = await response.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<CardStock>(json);
+            return all.FirstOrDefault(c =>
+                c.cardId == cardId &&
+                c.isAlter == isAlter &&
+                c.cardImage == cardImage);
         }
 
-        public async Task<Guid> CreateAsync(CardStock card)
+        // --------------------------
+        // Crear carta
+        // --------------------------
+        public async Task CreateAsync(CardStock card)
         {
             var json = JsonConvert.SerializeObject(card);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -47,10 +68,13 @@ namespace OnePieceTCG_Manager.Services
             var response = await _http.PostAsync("/CardStock", content);
             response.EnsureSuccessStatusCode();
 
-            var idStr = await response.Content.ReadAsStringAsync();
-            return Guid.Parse(idStr.Trim('"')); // API devuelve el GUID como string
+            // ❌ cache inválido
+            InvalidateCache();
         }
 
+        // --------------------------
+        // Update completo
+        // --------------------------
         public async Task UpdateAsync(Guid id, CardStock card)
         {
             var json = JsonConvert.SerializeObject(card);
@@ -58,13 +82,30 @@ namespace OnePieceTCG_Manager.Services
 
             var response = await _http.PutAsync($"/CardStock/{id}", content);
             response.EnsureSuccessStatusCode();
+
+            InvalidateCache();
         }
 
+        // --------------------------
+        // Update solo unidades
+        // --------------------------
         public async Task UpdateUnitsAsync(Guid id, int units)
         {
-            var json = new StringContent(units.ToString(), Encoding.UTF8, "application/json");
-            var response = await _http.PutAsync($"/CardStock/{id}/Units?units={units}", null);
+            var response = await _http.PutAsync(
+                $"/CardStock/{id}/Units?units={units}", null);
+
             response.EnsureSuccessStatusCode();
+
+            InvalidateCache();
+        }
+
+        // --------------------------
+        // Invalidar cache
+        // --------------------------
+        private void InvalidateCache()
+        {
+            _isLoaded = false;
+            _cache = null;
         }
     }
 }

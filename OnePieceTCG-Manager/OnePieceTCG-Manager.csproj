@@ -211,9 +211,6 @@
     <Folder Include="Economia\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\OP12-034_okj7ekL.jpg" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="img\optcg-manager.ico" />
   </ItemGroup>
   <ItemGroup>

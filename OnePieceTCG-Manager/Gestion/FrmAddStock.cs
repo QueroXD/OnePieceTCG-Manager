@@ -34,14 +34,13 @@ namespace OnePieceTCG_Manager.Gestion
             _isAlter = isAlter;
             _cardImage = cardImage;
 
-            LoadCardFromApiStockAsync().Wait();
-
             addButton.Visible = false;
             confirmButton.Visible = true;
 
             if (modoSoloUnidades)
             {
-                FrmAddStock.ActiveForm.Text = "Detalles de la carta";
+                Text = "Detalles de la carta";
+
                 foreach (Control c in Controls)
                 {
                     if (c.Name != "inputCantidad" &&
@@ -51,6 +50,13 @@ namespace OnePieceTCG_Manager.Gestion
             }
         }
 
+        private async void FrmAddStock_Load(object sender, EventArgs e)
+        {
+            if (_modoModificacion)
+                await LoadCardFromApiStockAsync();
+        }
+
+
         private void FrmAddStock_FormClosed(object sender, FormClosedEventArgs e)
         {
             // nada que cerrar ahora, todo es API
@@ -58,11 +64,10 @@ namespace OnePieceTCG_Manager.Gestion
 
         private async Task LoadCardFromApiStockAsync()
         {
-            var allCards = await _stockService.GetAllAsync();
-            var card = allCards.FirstOrDefault(c =>
-                c.cardId == _cardId &&
-                c.isAlter == _isAlter &&
-                c.cardImage == _cardImage);
+            var card = await _stockService.GetByKeyAsync(
+                _cardId,
+                _isAlter,
+                _cardImage);
 
             if (card == null)
             {
@@ -75,7 +80,6 @@ namespace OnePieceTCG_Manager.Gestion
             lblStatus.BackColor = System.Drawing.Color.Yellow;
             lblStatus.Text = "Unidades existentes: " + card.units;
 
-            // llenar campos
             inputCardID.Text = card.cardId;
             inputCardName.Text = card.cardName;
             inputRarity.Text = card.rarity;
@@ -94,6 +98,7 @@ namespace OnePieceTCG_Manager.Gestion
 
             fotoCard.Load(card.cardImage);
         }
+
 
         private async void btnSearch_Click(object sender, EventArgs e)
         {
@@ -151,7 +156,7 @@ namespace OnePieceTCG_Manager.Gestion
             fotoCard.ImageLocation = selectedImage;
             fotoCard.Load(selectedImage);
 
-            CheckIfCardExists(cardId, isAlter.Checked, selectedImage);
+            await CheckIfCardExistsAsync(cardId, isAlter.Checked, selectedImage);
         }
 
         private async void addButton_Click(object sender, EventArgs e)
@@ -237,17 +242,13 @@ namespace OnePieceTCG_Manager.Gestion
 
             await _stockService.UpdateAsync(existing.Id, existing);
 
-            clearForm();
+            DialogResult = DialogResult.OK;
+            Close();
         }
 
-        private void CheckIfCardExists(string cardId, bool isAlter, string imagePath)
+        private async Task CheckIfCardExistsAsync(string cardId, bool isAlter, string imagePath)
         {
-            var existingTask = _stockService.GetAllAsync();
-            existingTask.Wait();
-            var existing = existingTask.Result.FirstOrDefault(c =>
-                c.cardId == cardId &&
-                c.isAlter == isAlter &&
-                c.cardImage == imagePath);
+            var existing = await _stockService.GetByKeyAsync(cardId, isAlter, imagePath);
 
             if (existing != null)
             {
@@ -264,6 +265,7 @@ namespace OnePieceTCG_Manager.Gestion
                 inputCantidad.Value = 0;
             }
         }
+
 
         private void clearForm()
         {

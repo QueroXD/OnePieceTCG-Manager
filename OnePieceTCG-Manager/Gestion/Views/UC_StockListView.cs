@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 using OnePieceTCG_Manager.Models;
@@ -7,14 +8,22 @@ namespace OnePieceTCG_Manager.Gestion.Views
 {
     public partial class UC_StockListView : UserControl
     {
+        public event Action<CardStock> CardDoubleClicked;
+
+        private List<CardStock> _data = new List<CardStock>();
+
         public UC_StockListView()
         {
             InitializeComponent();
+
+            dataGrid.CellDoubleClick += DataGrid_CellDoubleClick;
         }
 
         public void LoadData(IEnumerable<CardStock> data)
         {
-            var list = data.Select(c => new
+            _data = data.ToList();
+
+            var list = _data.Select(c => new
             {
                 ID = c.cardId,
                 Nombre = c.cardName,
@@ -32,23 +41,15 @@ namespace OnePieceTCG_Manager.Gestion.Views
             dataGrid.ReadOnly = true;
             dataGrid.AllowUserToAddRows = false;
             dataGrid.AllowUserToDeleteRows = false;
+        }
 
-            dataGrid.CellDoubleClick += (s, e) =>
-            {
-                if (e.RowIndex >= 0)
-                {
-                    var row = data.ElementAt(e.RowIndex);
+        private void DataGrid_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.RowIndex >= _data.Count)
+                return;
 
-                    var frm = new FrmAddStock(
-                        row.cardId,
-                        row.isAlter,
-                        row.cardImage,
-                        modoSoloUnidades: true);
-
-                    frm.ShowDialog();
-                }
-            };
-
+            var card = _data[e.RowIndex];
+            CardDoubleClicked?.Invoke(card);
         }
     }
 }
