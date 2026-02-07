@@ -119,5 +119,39 @@ namespace OnePieceTCG_Manager.Utils
                 Console.WriteLine($"Error cargando imagen: {ex.Message}");
             }
         }
+
+
+        public static async Task<Image> TryLoadImageAsync(string pathOrUrl)
+        {
+            return await Task.Run(() =>
+            {
+                try
+                {
+                    if (System.IO.File.Exists(pathOrUrl))
+                    {
+                        using (var fs = new System.IO.FileStream(pathOrUrl, System.IO.FileMode.Open, System.IO.FileAccess.Read))
+                        {
+                            return Image.FromStream(fs);
+                        }
+                    }
+
+                    if (Uri.TryCreate(pathOrUrl, UriKind.Absolute, out var uri) &&
+                        (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+                    {
+                        using (var wc = new System.Net.WebClient())
+                        {
+                            var bytes = wc.DownloadData(uri);
+                            using (var ms = new System.IO.MemoryStream(bytes))
+                            {
+                                return Image.FromStream(ms);
+                            }
+                        }
+                    }
+                }
+                catch { }
+
+                return null;
+            });
+        }
     }
 }

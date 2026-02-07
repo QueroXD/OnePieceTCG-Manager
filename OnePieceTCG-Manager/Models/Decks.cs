@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Drawing;
 
 namespace OnePieceTCG_Manager.Models
 {
@@ -45,5 +47,29 @@ namespace OnePieceTCG_Manager.Models
         public Usuarios Usuario { get; set; }
 
         public ICollection<DeckCard> DeckCards { get; set; }
+    }
+
+    public class DeckRow : INotifyPropertyChanged
+    {
+        public Guid Id { get; set; }
+        public string DeckName { get; set; }
+        public string LeaderName { get; set; }
+        public string LeaderImageUrl { get; set; }
+        public int TotalCards { get; set; }
+        public DateTime LastUpdated { get; set; }
+        public bool IsActive { get; set; }
+
+        private Image _leaderImage;
+        public Image LeaderImage
+        {
+            get => _leaderImage;
+            set
+            {
+                _leaderImage = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LeaderImage)));
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
     }
 }

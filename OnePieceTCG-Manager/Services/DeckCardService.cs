@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace OnePieceTCG_Manager.Services
 {
-    internal class DeckCardService
+    public class DeckCardService
     {
     }
 }

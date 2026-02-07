@@ -1,12 +1,42 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using OnePieceTCG_Manager.Models;
+using OnePieceTCG_Manager.Properties;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace OnePieceTCG_Manager.Services
 {
-    internal class DecksService
+    public class DecksService
     {
+        private readonly HttpClient _http;
+
+        public DecksService()
+        {
+            _http = new HttpClient
+            {
+                BaseAddress = new Uri(Settings.Default.db_api)
+            };
+        }
+
+        // Get Decks by CodUsu
+        public async Task<List<DeckRow>> GetDecksByUserAsync(string codUsu)
+        {
+            var response = await _http.GetAsync($"Decks/{codUsu}");
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            return JsonConvert.DeserializeObject<List<DeckRow>>(json)
+                   ?? new List<DeckRow>();
+        }
+
+        // Delete Deck by Id
+        public async Task DeleteDeckAsync(Guid deckId)
+        {
+            var response = await _http.DeleteAsync($"Decks/{deckId}");
+            response.EnsureSuccessStatusCode();
+        }
     }
 }

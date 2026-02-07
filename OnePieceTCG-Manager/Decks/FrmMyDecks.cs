@@ -1,4 +1,7 @@
 ﻿using OnePieceTCG_Manager.Data;
+using OnePieceTCG_Manager.Models;
+using OnePieceTCG_Manager.Services;
+using OnePieceTCG_Manager.Utils;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -13,7 +16,7 @@ namespace OnePieceTCG_Manager.Decks
     public partial class FrmMyDecks : Form
     {
         private readonly string _codUsu;
-        private readonly OnePieceContext _db;
+        private readonly DecksService _decksService;
 
         private readonly Dictionary<string, Image> _thumbCache = new Dictionary<string, Image>(StringComparer.OrdinalIgnoreCase);
 
@@ -22,10 +25,10 @@ namespace OnePieceTCG_Manager.Decks
             InitializeComponent();
 
             _codUsu = codUsu;
-            _db = new OnePieceContext();
+            _decksService = new DecksService();
 
             InitializeGrid();
-            LoadDecks();
+            LoadDecksAsync();
             pnlTop_Resize(this, EventArgs.Empty); // posiciona botones al inicio
         }
 
@@ -108,35 +111,9 @@ namespace OnePieceTCG_Manager.Decks
             btnEdit_Click(sender, EventArgs.Empty);
         }
 
-        private void LoadDecks()
+        private async Task LoadDecksAsync()
         {
-            var raw = _db.Decks
-                .Include(d => d.LeaderCard)
-                .Include(d => d.DeckCards)
-                .Where(d => d.codUsu == _codUsu)
-                .OrderByDescending(d => d.lastUpdatedDate)
-                .Select(d => new
-                {
-                    d.Id,
-                    d.deckName,
-                    d.isActive,
-                    d.lastUpdatedDate,
-                    LeaderName = d.LeaderCard != null ? d.LeaderCard.cardName : "",
-                    LeaderImageUrl = d.LeaderCard != null ? d.LeaderCard.cardImage : null,
-                    TotalCards = d.DeckCards.Sum(dc => (int?)dc.quantity) ?? 0
-                })
-                .ToList();
-
-            var rows = raw.Select(r => new DeckRow
-            {
-                Id = r.Id,
-                DeckName = r.deckName,
-                LeaderName = r.LeaderName,
-                LeaderImageUrl = r.LeaderImageUrl,
-                TotalCards = r.TotalCards,
-                LastUpdated = r.lastUpdatedDate,
-                IsActive = r.isActive
-            }).ToList();
+            var rows = await _decksService.GetDecksByUserAsync(_codUsu);
 
             dgvDecks.DataSource = new BindingList<DeckRow>(rows);
 
@@ -155,7 +132,7 @@ namespace OnePieceTCG_Manager.Decks
                     continue;
                 }
 
-                var img = await ImageLoader.TryLoadImageAsync(row.LeaderImageUrl);
+                var img = await ImageUtils.TryLoadImageAsync(row.LeaderImageUrl);
                 if (img != null)
                 {
                     _thumbCache[row.LeaderImageUrl] = img;
@@ -171,7 +148,7 @@ namespace OnePieceTCG_Manager.Decks
             using (var frm = new FrmDeckEditor(_codUsu))
                 frm.ShowDialog(this);
 
-            LoadDecks();
+            LoadDecksAsync();
         }
 
         private void btnEdit_Click(object sender, EventArgs e)
@@ -182,62 +159,39 @@ namespace OnePieceTCG_Manager.Decks
             using (var frm = new FrmDeckEditor(_codUsu, deckId))
                 frm.ShowDialog(this);
 
-            LoadDecks();
+            LoadDecksAsync();
         }
 
-        private void btnDelete_Click(object sender, EventArgs e)
+        private async void btnDelete_Click(object sender, EventArgs e)
         {
             if (dgvDecks.CurrentRow == null) return;
 
-            var deckId = (Guid)dgvDecks.CurrentRow.Cells["Id"].Value;
-            var deck = _db.Decks.Include(d => d.DeckCards).FirstOrDefault(d => d.Id == deckId);
-            if (deck == null) return;
+            var row = (DeckRow)dgvDecks.CurrentRow.DataBoundItem;
+            var deckId = row.Id;
+            var name = row.DeckName ?? "(sin nombre)";
 
-            var name = deck.deckName ?? "(sin nombre)";
-            if (MessageBox.Show($"¿Eliminar deck '{name}'?\n\nEsto devolverá al stock todas las cartas usadas por este deck.",
-                "Confirmar", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
+            if (MessageBox.Show(
+                $"¿Eliminar deck '{name}'?\n\nEsto devolverá al stock todas las cartas usadas por este deck.",
+                "Confirmar",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning) != DialogResult.Yes)
                 return;
 
-            using (var tx = _db.Database.BeginTransaction())
+            try
             {
-                try
-                {
-                    var deckCards = _db.DeckCards.Where(dc => dc.deckId == deckId).ToList();
-                    var byCard = deckCards
-                        .GroupBy(dc => dc.cardStockId)
-                        .ToDictionary(g => g.Key, g => g.Sum(x => x.quantity));
-
-                    if (deck.leaderCardId.HasValue)
-                    {
-                        var leaderId = deck.leaderCardId.Value;
-                        if (byCard.ContainsKey(leaderId)) byCard[leaderId] += 1;
-                        else byCard[leaderId] = 1;
-                    }
-
-                    var affectedIds = byCard.Keys.ToList();
-                    var stocks = _db.CardStock.Where(c => affectedIds.Contains(c.Id)).ToList();
-
-                    foreach (var st in stocks)
-                    {
-                        var dec = byCard[st.Id];
-                        st.usedCards = Math.Max(0, st.usedCards - dec);
-                        st.lastUpdatedCardDate = DateTime.Now;
-                    }
-
-                    _db.Decks.Remove(deck);
-                    _db.SaveChanges();
-
-                    tx.Commit();
-                }
-                catch (Exception ex)
-                {
-                    tx.Rollback();
-                    MessageBox.Show("Error eliminando deck:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                await _decksService.DeleteDeckAsync(deckId);
+                await LoadDecksAsync();
             }
-
-            LoadDecks();
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Error eliminando deck:\n" + ex.Message,
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
         }
+
 
         // ✅ Handler clásico (sin lambda) para el Designer
         private void pnlTop_Resize(object sender, EventArgs e)
@@ -251,67 +205,6 @@ namespace OnePieceTCG_Manager.Decks
             right -= (btnEdit.Width + 10);
 
             btnCreate.Location = new Point(right - btnCreate.Width, 12);
-        }
-
-        // ViewModel
-        private class DeckRow : INotifyPropertyChanged
-        {
-            public Guid Id { get; set; }
-            public string DeckName { get; set; }
-            public string LeaderName { get; set; }
-            public string LeaderImageUrl { get; set; }
-            public int TotalCards { get; set; }
-            public DateTime LastUpdated { get; set; }
-            public bool IsActive { get; set; }
-
-            private Image _leaderImage;
-            public Image LeaderImage
-            {
-                get => _leaderImage;
-                set
-                {
-                    _leaderImage = value;
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LeaderImage)));
-                }
-            }
-
-            public event PropertyChangedEventHandler PropertyChanged;
-        }
-    }
-
-    internal static class ImageLoader
-    {
-        public static async Task<Image> TryLoadImageAsync(string pathOrUrl)
-        {
-            return await Task.Run(() =>
-            {
-                try
-                {
-                    if (System.IO.File.Exists(pathOrUrl))
-                    {
-                        using (var fs = new System.IO.FileStream(pathOrUrl, System.IO.FileMode.Open, System.IO.FileAccess.Read))
-                        {
-                            return Image.FromStream(fs);
-                        }
-                    }
-
-                    if (Uri.TryCreate(pathOrUrl, UriKind.Absolute, out var uri) &&
-                        (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
-                    {
-                        using (var wc = new System.Net.WebClient())
-                        {
-                            var bytes = wc.DownloadData(uri);
-                            using (var ms = new System.IO.MemoryStream(bytes))
-                            {
-                                return Image.FromStream(ms);
-                            }
-                        }
-                    }
-                }
-                catch { }
-
-                return null;
-            });
         }
     }
 }
