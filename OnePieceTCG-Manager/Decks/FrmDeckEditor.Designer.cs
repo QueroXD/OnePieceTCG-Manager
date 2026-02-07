@@ -60,6 +60,7 @@
             this.pnlDeckCards = new System.Windows.Forms.Panel();
             this.lblDeckCardsTitle = new System.Windows.Forms.Label();
             this.pnlLeader = new System.Windows.Forms.Panel();
+            this.picLeader = new System.Windows.Forms.PictureBox();
             this.lblLeaderName = new System.Windows.Forms.Label();
             this.btnClearLeader = new System.Windows.Forms.Button();
             this.lblTotal = new System.Windows.Forms.Label();
@@ -76,7 +77,6 @@
             this.pnlBottom = new System.Windows.Forms.Panel();
             this.btnSave = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
-            this.picLeader = new System.Windows.Forms.PictureBox();
             this.tlpRoot.SuspendLayout();
             this.pnlTop.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitMain)).BeginInit();
@@ -85,10 +85,10 @@
             this.splitMain.SuspendLayout();
             this.pnlLeft.SuspendLayout();
             this.pnlLeader.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.picLeader)).BeginInit();
             this.pnlRight.SuspendLayout();
             this.pnlFilters.SuspendLayout();
             this.pnlBottom.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.picLeader)).BeginInit();
             this.SuspendLayout();
             // 
             // tlpRoot
@@ -105,7 +105,7 @@
             this.tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 64F));
             this.tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 64F));
-            this.tlpRoot.Size = new System.Drawing.Size(1082, 653);
+            this.tlpRoot.Size = new System.Drawing.Size(1346, 653);
             this.tlpRoot.TabIndex = 0;
             // 
             // pnlTop
@@ -117,7 +117,7 @@
             this.pnlTop.Location = new System.Drawing.Point(3, 3);
             this.pnlTop.Name = "pnlTop";
             this.pnlTop.Padding = new System.Windows.Forms.Padding(12);
-            this.pnlTop.Size = new System.Drawing.Size(1076, 58);
+            this.pnlTop.Size = new System.Drawing.Size(1340, 58);
             this.pnlTop.TabIndex = 0;
             // 
             // lblTitle
@@ -143,7 +143,7 @@
             // txtDeckName
             // 
             this.txtDeckName.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.txtDeckName.Location = new System.Drawing.Point(290, 17);
+            this.txtDeckName.Location = new System.Drawing.Point(310, 17);
             this.txtDeckName.Name = "txtDeckName";
             this.txtDeckName.Size = new System.Drawing.Size(520, 30);
             this.txtDeckName.TabIndex = 2;
@@ -161,8 +161,8 @@
             // splitMain.Panel2
             // 
             this.splitMain.Panel2.Controls.Add(this.pnlRight);
-            this.splitMain.Size = new System.Drawing.Size(1076, 519);
-            this.splitMain.SplitterDistance = 867;
+            this.splitMain.Size = new System.Drawing.Size(1340, 519);
+            this.splitMain.SplitterDistance = 627;
             this.splitMain.TabIndex = 1;
             // 
             // pnlLeft
@@ -174,7 +174,7 @@
             this.pnlLeft.Location = new System.Drawing.Point(0, 0);
             this.pnlLeft.Name = "pnlLeft";
             this.pnlLeft.Padding = new System.Windows.Forms.Padding(12);
-            this.pnlLeft.Size = new System.Drawing.Size(867, 519);
+            this.pnlLeft.Size = new System.Drawing.Size(627, 519);
             this.pnlLeft.TabIndex = 0;
             // 
             // pnlDeckCards
@@ -185,7 +185,7 @@
             this.pnlDeckCards.Location = new System.Drawing.Point(12, 186);
             this.pnlDeckCards.Name = "pnlDeckCards";
             this.pnlDeckCards.Padding = new System.Windows.Forms.Padding(0, 8, 0, 8);
-            this.pnlDeckCards.Size = new System.Drawing.Size(843, 321);
+            this.pnlDeckCards.Size = new System.Drawing.Size(603, 321);
             this.pnlDeckCards.TabIndex = 0;
             // 
             // lblDeckCardsTitle
@@ -195,7 +195,7 @@
             this.lblDeckCardsTitle.Location = new System.Drawing.Point(12, 152);
             this.lblDeckCardsTitle.Name = "lblDeckCardsTitle";
             this.lblDeckCardsTitle.Padding = new System.Windows.Forms.Padding(0, 10, 0, 0);
-            this.lblDeckCardsTitle.Size = new System.Drawing.Size(843, 34);
+            this.lblDeckCardsTitle.Size = new System.Drawing.Size(603, 34);
             this.lblDeckCardsTitle.TabIndex = 1;
             this.lblDeckCardsTitle.Text = "Cartas del Deck";
             // 
@@ -211,8 +211,17 @@
             this.pnlLeader.Location = new System.Drawing.Point(12, 12);
             this.pnlLeader.Name = "pnlLeader";
             this.pnlLeader.Padding = new System.Windows.Forms.Padding(10);
-            this.pnlLeader.Size = new System.Drawing.Size(843, 140);
+            this.pnlLeader.Size = new System.Drawing.Size(603, 140);
             this.pnlLeader.TabIndex = 2;
+            // 
+            // picLeader
+            // 
+            this.picLeader.Location = new System.Drawing.Point(10, 10);
+            this.picLeader.Name = "picLeader";
+            this.picLeader.Size = new System.Drawing.Size(90, 120);
+            this.picLeader.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.picLeader.TabIndex = 0;
+            this.picLeader.TabStop = false;
             // 
             // lblLeaderName
             // 
@@ -255,7 +264,7 @@
             this.pnlRight.Location = new System.Drawing.Point(0, 0);
             this.pnlRight.Name = "pnlRight";
             this.pnlRight.Padding = new System.Windows.Forms.Padding(12);
-            this.pnlRight.Size = new System.Drawing.Size(205, 519);
+            this.pnlRight.Size = new System.Drawing.Size(709, 519);
             this.pnlRight.TabIndex = 0;
             // 
             // flowCatalog
@@ -264,19 +273,19 @@
             this.flowCatalog.BackColor = System.Drawing.Color.White;
             this.flowCatalog.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.flowCatalog.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.flowCatalog.Location = new System.Drawing.Point(12, 294);
+            this.flowCatalog.Location = new System.Drawing.Point(12, 363);
             this.flowCatalog.Name = "flowCatalog";
-            this.flowCatalog.Size = new System.Drawing.Size(181, 213);
+            this.flowCatalog.Size = new System.Drawing.Size(685, 144);
             this.flowCatalog.TabIndex = 0;
             // 
             // lblCatalogTitle
             // 
             this.lblCatalogTitle.Dock = System.Windows.Forms.DockStyle.Top;
             this.lblCatalogTitle.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
-            this.lblCatalogTitle.Location = new System.Drawing.Point(12, 260);
+            this.lblCatalogTitle.Location = new System.Drawing.Point(12, 329);
             this.lblCatalogTitle.Name = "lblCatalogTitle";
             this.lblCatalogTitle.Padding = new System.Windows.Forms.Padding(0, 10, 0, 0);
-            this.lblCatalogTitle.Size = new System.Drawing.Size(181, 34);
+            this.lblCatalogTitle.Size = new System.Drawing.Size(685, 34);
             this.lblCatalogTitle.TabIndex = 1;
             this.lblCatalogTitle.Text = "Catálogo (clic para añadir)";
             // 
@@ -288,7 +297,7 @@
             this.flowLeaders.Dock = System.Windows.Forms.DockStyle.Top;
             this.flowLeaders.Location = new System.Drawing.Point(12, 110);
             this.flowLeaders.Name = "flowLeaders";
-            this.flowLeaders.Size = new System.Drawing.Size(181, 150);
+            this.flowLeaders.Size = new System.Drawing.Size(685, 219);
             this.flowLeaders.TabIndex = 2;
             this.flowLeaders.WrapContents = false;
             // 
@@ -299,7 +308,7 @@
             this.lblLeadersTitle.Location = new System.Drawing.Point(12, 76);
             this.lblLeadersTitle.Name = "lblLeadersTitle";
             this.lblLeadersTitle.Padding = new System.Windows.Forms.Padding(0, 10, 0, 0);
-            this.lblLeadersTitle.Size = new System.Drawing.Size(181, 34);
+            this.lblLeadersTitle.Size = new System.Drawing.Size(685, 34);
             this.lblLeadersTitle.TabIndex = 3;
             this.lblLeadersTitle.Text = "Líderes (elige 1)";
             // 
@@ -315,7 +324,7 @@
             this.pnlFilters.Location = new System.Drawing.Point(12, 12);
             this.pnlFilters.Name = "pnlFilters";
             this.pnlFilters.Padding = new System.Windows.Forms.Padding(10);
-            this.pnlFilters.Size = new System.Drawing.Size(181, 64);
+            this.pnlFilters.Size = new System.Drawing.Size(685, 64);
             this.pnlFilters.TabIndex = 4;
             // 
             // lblSearch
@@ -331,16 +340,16 @@
             // txtSearch
             // 
             this.txtSearch.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.txtSearch.Location = new System.Drawing.Point(75, 14);
+            this.txtSearch.Location = new System.Drawing.Point(83, 14);
             this.txtSearch.Name = "txtSearch";
-            this.txtSearch.Size = new System.Drawing.Size(340, 30);
+            this.txtSearch.Size = new System.Drawing.Size(299, 30);
             this.txtSearch.TabIndex = 1;
             // 
             // chkShowNoStock
             // 
             this.chkShowNoStock.AutoSize = true;
             this.chkShowNoStock.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.chkShowNoStock.Location = new System.Drawing.Point(430, 16);
+            this.chkShowNoStock.Location = new System.Drawing.Point(416, 16);
             this.chkShowNoStock.Name = "chkShowNoStock";
             this.chkShowNoStock.Size = new System.Drawing.Size(132, 27);
             this.chkShowNoStock.TabIndex = 2;
@@ -349,7 +358,7 @@
             // btnClearFilters
             // 
             this.btnClearFilters.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.btnClearFilters.Location = new System.Drawing.Point(560, 14);
+            this.btnClearFilters.Location = new System.Drawing.Point(584, 14);
             this.btnClearFilters.Name = "btnClearFilters";
             this.btnClearFilters.Size = new System.Drawing.Size(90, 32);
             this.btnClearFilters.TabIndex = 3;
@@ -364,7 +373,7 @@
             this.pnlBottom.Location = new System.Drawing.Point(3, 592);
             this.pnlBottom.Name = "pnlBottom";
             this.pnlBottom.Padding = new System.Windows.Forms.Padding(12);
-            this.pnlBottom.Size = new System.Drawing.Size(1076, 58);
+            this.pnlBottom.Size = new System.Drawing.Size(1340, 58);
             this.pnlBottom.TabIndex = 2;
             this.pnlBottom.Resize += new System.EventHandler(this.pnlBottom_Resize);
             // 
@@ -372,7 +381,7 @@
             // 
             this.btnSave.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSave.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.btnSave.Location = new System.Drawing.Point(876, -42);
+            this.btnSave.Location = new System.Drawing.Point(1140, -42);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(130, 38);
             this.btnSave.TabIndex = 0;
@@ -382,26 +391,17 @@
             // 
             this.btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancel.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.btnCancel.Location = new System.Drawing.Point(876, -42);
+            this.btnCancel.Location = new System.Drawing.Point(1140, -42);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(130, 38);
             this.btnCancel.TabIndex = 1;
             this.btnCancel.Text = "Cancelar";
             // 
-            // picLeader
-            // 
-            this.picLeader.Location = new System.Drawing.Point(10, 10);
-            this.picLeader.Name = "picLeader";
-            this.picLeader.Size = new System.Drawing.Size(90, 120);
-            this.picLeader.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.picLeader.TabIndex = 0;
-            this.picLeader.TabStop = false;
-            // 
             // FrmDeckEditor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1082, 653);
+            this.ClientSize = new System.Drawing.Size(1346, 653);
             this.Controls.Add(this.tlpRoot);
             this.MinimumSize = new System.Drawing.Size(1100, 700);
             this.Name = "FrmDeckEditor";
@@ -418,11 +418,11 @@
             this.pnlLeft.ResumeLayout(false);
             this.pnlLeader.ResumeLayout(false);
             this.pnlLeader.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.picLeader)).EndInit();
             this.pnlRight.ResumeLayout(false);
             this.pnlFilters.ResumeLayout(false);
             this.pnlFilters.PerformLayout();
             this.pnlBottom.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.picLeader)).EndInit();
             this.ResumeLayout(false);
 
         }

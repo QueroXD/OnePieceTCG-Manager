@@ -1,13 +1,10 @@
-﻿using OnePieceTCG_Manager.Data;
-using OnePieceTCG_Manager.Models;
+﻿using OnePieceTCG_Manager.Models;
 using OnePieceTCG_Manager.Services;
 using OnePieceTCG_Manager.Utils;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data.Entity;
 using System.Drawing;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 

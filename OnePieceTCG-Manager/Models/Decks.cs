@@ -72,4 +72,13 @@ namespace OnePieceTCG_Manager.Models
 
         public event PropertyChangedEventHandler PropertyChanged;
     }
+
+    public class DeckSaveDto
+    {
+        public Guid Id { get; set; }            // Guid.Empty si nuevo
+        public string CodUsu { get; set; }
+        public string DeckName { get; set; }
+        public Guid LeaderCardId { get; set; }
+        public List<DeckCardDto> DeckCards { get; set; } = new List<DeckCardDto>();
+    }
 }

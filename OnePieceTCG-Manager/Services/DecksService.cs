@@ -38,5 +38,23 @@ namespace OnePieceTCG_Manager.Services
             var response = await _http.DeleteAsync($"Decks/{deckId}");
             response.EnsureSuccessStatusCode();
         }
+
+        public async Task<DeckEditDto> GetDeckForEditAsync(Guid deckId)
+        {
+            var response = await _http.GetAsync($"Decks/edit/{deckId}");
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<DeckEditDto>(json);
+        }
+
+        public async Task SaveDeckAsync(DeckSaveDto dto)
+        {
+            var json = JsonConvert.SerializeObject(dto);
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+            var response = await _http.PostAsync("Decks", content);
+            response.EnsureSuccessStatusCode();
+        }
     }
 }

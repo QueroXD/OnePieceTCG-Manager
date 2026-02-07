@@ -1,5 +1,6 @@
-﻿using OnePieceTCG_Manager.Data;
-using OnePieceTCG_Manager.Models;
+﻿using OnePieceTCG_Manager.Models;
+using OnePieceTCG_Manager.Services;
+using OnePieceTCG_Manager.Utils;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -12,7 +13,8 @@ namespace OnePieceTCG_Manager.Decks
 {
     public partial class FrmDeckEditor : Form
     {
-        private readonly OnePieceContext _db;
+        private readonly DecksService _decksService;
+        private readonly CardStockService _cardStockService;
         private readonly string _codUsu;
 
         private Deck _deck;
@@ -37,8 +39,9 @@ namespace OnePieceTCG_Manager.Decks
             InitializeComponent();
             pnlBottom_Resize(this, EventArgs.Empty);
 
-            _db = new OnePieceContext();
             _codUsu = codUsu;
+            _decksService = new DecksService();
+            _cardStockService = new CardStockService();
 
             // eventos UI
             txtSearch.TextChanged += (s, e) => _ = ReloadCatalogAsync();
@@ -95,36 +98,50 @@ namespace OnePieceTCG_Manager.Decks
             _ = BootstrapAsync();
         }
 
-        private void LoadExistingDeck(Guid deckId)
+        private async void LoadExistingDeck(Guid deckId)
         {
-            _deck = _db.Decks
-                .Include(d => d.DeckCards.Select(dc => dc.CardStock))
-                .Include(d => d.LeaderCard)
-                .FirstOrDefault(d => d.Id == deckId);
+            DeckEditDto dto;
 
-            if (_deck == null)
+            try
+            {
+                dto = await _decksService.GetDeckForEditAsync(deckId);
+            }
+            catch
             {
                 MessageBox.Show("Deck no encontrado", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Close();
                 return;
             }
 
+            _deck = new Deck
+            {
+                Id = dto.Id,
+                deckName = dto.deckName,
+                deckDescription = dto.deckDescription,
+                codUsu = dto.codUsu,
+                isActive = dto.isActive,
+                createdDate = dto.createdDate,
+                lastUpdatedDate = dto.lastUpdatedDate,
+                leaderCardId = dto.LeaderCardId
+            };
+
             txtDeckName.Text = _deck.deckName ?? "";
 
             // Estado DB
-            _dbLeaderId = _deck.leaderCardId;
+            _dbLeaderId = dto.LeaderCardId;
             _dbCards.Clear();
-            foreach (var dc in _deck.DeckCards)
+            foreach (var dc in dto.DeckCards)
                 _dbCards[dc.cardStockId] = dc.quantity;
 
-            // Estado editor inicial = DB
+            // Estado editor inicial
             _selectedLeaderId = _dbLeaderId;
             _cards.Clear();
             foreach (var kv in _dbCards)
                 _cards[kv.Key] = kv.Value;
 
-            _ = BootstrapAsync();
+            await BootstrapAsync();
         }
+
 
         private async Task BootstrapAsync()
         {
@@ -141,8 +158,7 @@ namespace OnePieceTCG_Manager.Decks
         {
             _stockById.Clear();
 
-            // Traemos todas las cartas (incluye Leaders) porque el catálogo y leader strip lo necesitan
-            var all = await _db.CardStock.ToListAsync();
+            var all = await _cardStockService.GetAllAsync();
             foreach (var c in all)
                 _stockById[c.Id] = c;
         }
@@ -591,7 +607,7 @@ namespace OnePieceTCG_Manager.Decks
         // ============================
         // Guardar
         // ============================
-        private void btnSave_Click(object sender, EventArgs e)
+        private async void btnSave_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtDeckName.Text))
             {
@@ -605,116 +621,50 @@ namespace OnePieceTCG_Manager.Decks
                 return;
             }
 
-            // Validación stock final (por si cambió desde que abriste)
-            if (!ValidateEditorStock())
+            // Validación stock final
+            if (!await ValidateEditorStockAsync())
                 return;
 
-            using (var tx = _db.Database.BeginTransaction())
+            try
             {
-                try
+                // Preparar DTO para enviar a la API
+                var dto = new DeckSaveDto
                 {
-                    // 1) Asegurar deck
-                    _deck.deckName = txtDeckName.Text.Trim();
-                    _deck.lastUpdatedDate = DateTime.Now;
-                    _deck.leaderCardId = _selectedLeaderId.Value;
-
-                    if (_deck.Id == Guid.Empty)
-                        _db.Decks.Add(_deck);
-
-                    _db.SaveChanges();
-
-                    // 2) Releer estado anterior desde DB (para deltas reales)
-                    var oldLeaderId = _dbLeaderId; // el que cargamos inicialmente
-                    var oldDeckCards = _db.DeckCards.Where(dc => dc.deckId == _deck.Id).ToList();
-                    var oldMap = oldDeckCards.GroupBy(dc => dc.cardStockId).ToDictionary(g => g.Key, g => g.Sum(x => x.quantity));
-
-                    // incluir líder (1)
-                    if (oldLeaderId.HasValue)
-                        oldMap[oldLeaderId.Value] = (oldMap.TryGetValue(oldLeaderId.Value, out var qOldLeader) ? qOldLeader : 0) + 1;
-
-                    // 3) Nuevo map (editor) incluyendo líder (1)
-                    var newMap = _cards.ToDictionary(k => k.Key, v => v.Value);
-                    newMap[_selectedLeaderId.Value] = (newMap.TryGetValue(_selectedLeaderId.Value, out var qNewLeader) ? qNewLeader : 0) + 1;
-
-                    // 4) Deltas usedCards
-                    var allIds = oldMap.Keys.Union(newMap.Keys).ToList();
-                    var stocks = _db.CardStock.Where(c => allIds.Contains(c.Id)).ToList();
-
-                    foreach (var st in stocks)
+                    Id = _deck.Id, // Guid.Empty si es nuevo
+                    CodUsu = _codUsu,
+                    DeckName = txtDeckName.Text.Trim(),
+                    LeaderCardId = _selectedLeaderId.Value,
+                    DeckCards = _cards.Select(kv => new DeckCardDto
                     {
-                        int oldQty = oldMap.TryGetValue(st.Id, out var oq) ? oq : 0;
-                        int newQty = newMap.TryGetValue(st.Id, out var nq) ? nq : 0;
-                        int delta = newQty - oldQty;
+                        cardStockId = kv.Key,
+                        quantity = kv.Value
+                    }).ToList()
+                };
 
-                        if (delta != 0)
-                        {
-                            int updated = st.usedCards + delta;
-                            if (updated < 0) updated = 0;
-                            if (updated > st.units)
-                                throw new InvalidOperationException($"Stock insuficiente al guardar: {st.cardName} (units={st.units}, used={st.usedCards}, delta={delta})");
+                // Llamada API
+                await _decksService.SaveDeckAsync(dto);
 
-                            st.usedCards = updated;
-                            st.lastUpdatedCardDate = DateTime.Now;
-                        }
-                    }
-
-                    // 5) Sincronizar DeckCards (sin líder)
-                    //    - update / insert / delete
-                    var newNonLeader = _cards.ToDictionary(k => k.Key, v => v.Value);
-
-                    // delete los que ya no están
-                    foreach (var old in oldDeckCards)
-                    {
-                        if (!newNonLeader.ContainsKey(old.cardStockId))
-                            _db.DeckCards.Remove(old);
-                    }
-
-                    // upsert
-                    foreach (var kv in newNonLeader)
-                    {
-                        var existing = oldDeckCards.FirstOrDefault(x => x.cardStockId == kv.Key);
-                        if (existing != null)
-                            existing.quantity = kv.Value;
-                        else
-                        {
-                            _db.DeckCards.Add(new DeckCard
-                            {
-                                deckId = _deck.Id,
-                                cardStockId = kv.Key,
-                                quantity = kv.Value
-                            });
-                        }
-                    }
-
-                    // 6) Guardar cambios
-                    _db.SaveChanges();
-                    tx.Commit();
-
-                    MessageBox.Show("Deck guardado correctamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    Close();
-                }
-                catch (Exception ex)
-                {
-                    tx.Rollback();
-                    MessageBox.Show("Error guardando deck:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                MessageBox.Show("Deck guardado correctamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error guardando deck:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private bool ValidateEditorStock()
+
+        private async Task<bool> ValidateEditorStockAsync()
         {
-            // Revalidación contra DB actual por si han cambiado stocks/usos
-            // Cargamos stock actualizado para estas cartas
             var ids = _cards.Keys.ToList();
             if (_selectedLeaderId.HasValue) ids.Add(_selectedLeaderId.Value);
 
             ids = ids.Distinct().ToList();
 
-            var freshStocks = _db.CardStock.Where(c => ids.Contains(c.Id)).ToList();
+            // Traer stock actualizado desde API
+            var freshStocks = await _cardStockService.GetByIdsAsync(ids);
             var freshById = freshStocks.ToDictionary(x => x.Id, x => x);
 
-            // old reserved para excluir deck actual (si editas)
-            // usamos _dbCards / _dbLeaderId que reflejan el estado al abrir
             foreach (var id in ids)
             {
                 if (!freshById.TryGetValue(id, out var stock))
@@ -763,6 +713,7 @@ namespace OnePieceTCG_Manager.Decks
             return true;
         }
 
+
         // ============================
         // Imagen cache
         // ============================
@@ -773,7 +724,7 @@ namespace OnePieceTCG_Manager.Decks
             if (_imgCache.TryGetValue(pathOrUrl, out var cached))
                 return cached;
 
-            var img = await ImageLoader.TryLoadImageAsync(pathOrUrl);
+            var img = await ImageUtils.TryLoadImageAsync(pathOrUrl);
             if (img != null)
                 _imgCache[pathOrUrl] = img;
 

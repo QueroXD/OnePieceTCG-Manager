@@ -58,6 +58,22 @@ namespace OnePieceTCG_Manager.Services
         }
 
         // --------------------------
+        // Obtener varias cartas por ids
+        // --------------------------
+        public async Task<List<CardStock>> GetByIdsAsync(List<Guid> ids)
+        {
+            if (ids == null || ids.Count == 0) return new List<CardStock>();
+
+            // Convertimos a query string
+            string query = string.Join(",", ids);
+            var response = await _http.GetAsync($"CardStock/by-ids?ids={query}");
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<List<CardStock>>(json) ?? new List<CardStock>();
+        }
+
+        // --------------------------
         // Crear carta
         // --------------------------
         public async Task CreateAsync(CardStock card)
