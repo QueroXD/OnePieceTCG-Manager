@@ -1,8 +1,10 @@
 ﻿using OnePieceTCG_Manager.Gestion.Views;
 using OnePieceTCG_Manager.Models;
 using OnePieceTCG_Manager.Services;
+using OnePieceTCG_Manager.Utils;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -14,24 +16,14 @@ namespace OnePieceTCG_Manager.Gestion
         private readonly CardStockService _cardStockService = new CardStockService();
         private List<CardStock> _allData = new List<CardStock>();
 
-        private Label lblLoading;
+        private LoadingService _loading;
+
+        private const int MIN_LOADING_MS = 3000;
 
         public FrmVerStock()
         {
             InitializeComponent();
-
-            // Loading label dinámico (sin tocar Designer)
-            lblLoading = new Label
-            {
-                Text = "Cargando stock...",
-                Dock = DockStyle.Top,
-                Height = 20,
-                TextAlign = System.Drawing.ContentAlignment.MiddleCenter,
-                Visible = false
-            };
-
-            Controls.Add(lblLoading);
-            lblLoading.BringToFront();
+            _loading = new LoadingService(this);
         }
 
         private async void FrmVerStock_Load(object sender, EventArgs e)
@@ -57,31 +49,39 @@ namespace OnePieceTCG_Manager.Gestion
         // --------------------------
         private async Task LoadDataAsync()
         {
-            ToggleLoading(true);
-
-            _allData = await _cardStockService.GetAllAsync();
-
-            ToggleLoading(false);
-        }
-
-        private void ToggleLoading(bool loading)
-        {
-            lblLoading.Visible = loading;
-            panelContainer.Enabled = !loading;
-            panelFilters.Enabled = !loading;
-            Cursor = loading ? Cursors.WaitCursor : Cursors.Default;
+            await _loading.RunAsync(async () =>
+            {
+                _allData = await _cardStockService.GetAllAsync();
+            }, "Cargando stock...", 3000);
         }
 
         // --------------------------
         // Recarga completa explícita
         // --------------------------
+        private bool _isReloading = false;
+
         public async Task ReloadAsync()
         {
-            _allData.Clear();
-            await LoadDataAsync();
-            LoadFilters();
-            RefreshView();
+            if (_isReloading)
+                return;
+
+            _isReloading = true;
+
+            try
+            {
+                await _loading.RunAsync(async () =>
+                {
+                    _allData = await _cardStockService.GetAllAsync();
+                    LoadFilters();
+                    RefreshView();
+                }, "Actualizando stock...");
+            }
+            finally
+            {
+                _isReloading = false;
+            }
         }
+
 
         // --------------------------
         // Carga inicial de filtros
@@ -179,7 +179,7 @@ namespace OnePieceTCG_Manager.Gestion
         // --------------------------
         // Refresca la vista activa
         // --------------------------
-        private void RefreshView()
+        private async void RefreshView()
         {
             if (panelContainer.Controls.Count == 0)
                 return;
@@ -187,10 +187,15 @@ namespace OnePieceTCG_Manager.Gestion
             var data = GetFilteredData();
 
             if (panelContainer.Controls[0] is UC_StockListView list)
+            {
                 list.LoadData(data);
+            }
             else if (panelContainer.Controls[0] is UC_StockGalleryView gallery)
-                _ = gallery.LoadDataAsync(data);
+            {
+                await gallery.LoadDataAsync(data);
+            }
         }
+
 
         // --------------------------
         // Mostrar vista LISTA
@@ -215,7 +220,7 @@ namespace OnePieceTCG_Manager.Gestion
         // --------------------------
         // Mostrar vista GALERÍA
         // --------------------------
-        private void ShowGalleryView()
+        private async void ShowGalleryView()
         {
             lblMode.Text = "Modo: Galería";
 
@@ -226,10 +231,16 @@ namespace OnePieceTCG_Manager.Gestion
             };
 
             view.CardDoubleClicked += OpenEditStock;
-
             panelContainer.Controls.Add(view);
-            _ = view.LoadDataAsync(GetFilteredData());
+
+            var data = GetFilteredData();
+
+            await _loading.RunAsync(async () =>
+            {
+                await view.LoadDataAsync(data);
+            }, "Cargando galería...", 800);
         }
+
 
 
         private void toolListView_Click(object sender, EventArgs e)

@@ -160,6 +160,7 @@
       <DependentUpon>FrmModal.cs</DependentUpon>
     </Compile>
     <Compile Include="Utils\ImageUtils.cs" />
+    <Compile Include="Utils\LoadingService.cs" />
     <Compile Include="Utils\NasCardImageService.cs" />
     <EmbeddedResource Include="Decks\FrmDeckEditor.resx">
       <DependentUpon>FrmDeckEditor.cs</DependentUpon>
