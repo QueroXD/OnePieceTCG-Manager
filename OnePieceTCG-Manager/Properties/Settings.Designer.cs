@@ -25,7 +25,7 @@ namespace OnePieceTCG_Manager.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost:5100")]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://optcgapi-db.aquero.es")]
         public string db_api {
             get {
                 return ((string)(this["db_api"]));
