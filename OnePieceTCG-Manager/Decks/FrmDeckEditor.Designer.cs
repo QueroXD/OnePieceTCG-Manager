@@ -1,4 +1,4 @@
-﻿namespace OnePieceTCG_Manager.Decks
+namespace OnePieceTCG_Manager.Decks
 {
     partial class FrmDeckEditor
     {
@@ -231,7 +231,7 @@
             this.lblLeaderName.Name = "lblLeaderName";
             this.lblLeaderName.Size = new System.Drawing.Size(380, 26);
             this.lblLeaderName.TabIndex = 1;
-            this.lblLeaderName.Text = "Sin líder seleccionado";
+            this.lblLeaderName.Text = "Sin l�der seleccionado";
             // 
             // btnClearLeader
             // 
@@ -240,7 +240,7 @@
             this.btnClearLeader.Name = "btnClearLeader";
             this.btnClearLeader.Size = new System.Drawing.Size(110, 30);
             this.btnClearLeader.TabIndex = 2;
-            this.btnClearLeader.Text = "Quitar líder";
+            this.btnClearLeader.Text = "Cambiar lider";
             this.btnClearLeader.Click += new System.EventHandler(this.btnClearLeader_Click);
             // 
             // lblTotal
@@ -251,7 +251,7 @@
             this.lblTotal.Name = "lblTotal";
             this.lblTotal.Size = new System.Drawing.Size(253, 23);
             this.lblTotal.TabIndex = 3;
-            this.lblTotal.Text = "Cartas: 0 / 50 (Líder aparte: 1)";
+            this.lblTotal.Text = "Cartas: 0 / 50 (L�der aparte: 1)";
             // 
             // pnlRight
             // 
@@ -287,7 +287,7 @@
             this.lblCatalogTitle.Padding = new System.Windows.Forms.Padding(0, 10, 0, 0);
             this.lblCatalogTitle.Size = new System.Drawing.Size(685, 34);
             this.lblCatalogTitle.TabIndex = 1;
-            this.lblCatalogTitle.Text = "Catálogo (clic para añadir)";
+            this.lblCatalogTitle.Text = "2. Catalogo bloqueado hasta elegir lider";
             // 
             // flowLeaders
             // 
@@ -310,7 +310,7 @@
             this.lblLeadersTitle.Padding = new System.Windows.Forms.Padding(0, 10, 0, 0);
             this.lblLeadersTitle.Size = new System.Drawing.Size(685, 34);
             this.lblLeadersTitle.TabIndex = 3;
-            this.lblLeadersTitle.Text = "Líderes (elige 1)";
+            this.lblLeadersTitle.Text = "1. Elige tu lider";
             // 
             // pnlFilters
             // 
@@ -403,7 +403,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1346, 653);
             this.Controls.Add(this.tlpRoot);
-            this.MinimumSize = new System.Drawing.Size(1100, 700);
+            this.MinimumSize = new System.Drawing.Size(900, 620);
             this.Name = "FrmDeckEditor";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Editor de Deck";
@@ -428,3 +428,4 @@
         }
     }
 }
+

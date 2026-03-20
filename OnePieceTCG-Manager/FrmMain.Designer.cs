@@ -1,16 +1,9 @@
-锘縩amespace OnePieceTCG_Manager
+namespace OnePieceTCG_Manager
 {
     partial class FrmMain
     {
-        /// <summary>
-        /// Variable del dise帽ador necesaria.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
-        /// Limpiar los recursos que se est茅n usando.
-        /// </summary>
-        /// <param name="disposing">true si los recursos administrados se deben desechar; false en caso contrario.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -20,27 +13,24 @@
             base.Dispose(disposing);
         }
 
-        #region C贸digo generado por el Dise帽ador de Windows Forms
-
-        /// <summary>
-        /// M茅todo necesario para admitir el Dise帽ador. No se puede modificar
-        /// el contenido de este m茅todo con el editor de c贸digo.
-        /// </summary>
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmMain));
             this.menu = new System.Windows.Forms.MenuStrip();
             this.ajustesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.testConexi贸nToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.testConexi髇ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.carpetaDeCartasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.salirToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.gesti贸nToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.gesti髇ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.verStockToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.a帽adirStockToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.a馻dirStockToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.estadisticasStockToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.economiaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ingresosEstimadosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ingresosGanadosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.decksToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.misDecksToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.explorarDecksToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menu.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -49,7 +39,7 @@
             this.menu.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.menu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.ajustesToolStripMenuItem,
-            this.gesti贸nToolStripMenuItem,
+            this.gesti髇ToolStripMenuItem,
             this.economiaToolStripMenuItem,
             this.decksToolStripMenuItem});
             this.menu.Location = new System.Drawing.Point(0, 0);
@@ -62,18 +52,18 @@
             // ajustesToolStripMenuItem
             // 
             this.ajustesToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.testConexi贸nToolStripMenuItem,
+            this.testConexi髇ToolStripMenuItem,
             this.carpetaDeCartasToolStripMenuItem,
             this.salirToolStripMenuItem});
             this.ajustesToolStripMenuItem.Name = "ajustesToolStripMenuItem";
             this.ajustesToolStripMenuItem.Size = new System.Drawing.Size(70, 24);
             this.ajustesToolStripMenuItem.Text = "Ajustes";
             // 
-            // testConexi贸nToolStripMenuItem
+            // testConexi髇ToolStripMenuItem
             // 
-            this.testConexi贸nToolStripMenuItem.Name = "testConexi贸nToolStripMenuItem";
-            this.testConexi贸nToolStripMenuItem.Size = new System.Drawing.Size(208, 26);
-            this.testConexi贸nToolStripMenuItem.Text = "Test Conexi贸n";
+            this.testConexi髇ToolStripMenuItem.Name = "testConexi髇ToolStripMenuItem";
+            this.testConexi髇ToolStripMenuItem.Size = new System.Drawing.Size(208, 26);
+            this.testConexi髇ToolStripMenuItem.Text = "Test Conexi髇";
             // 
             // carpetaDeCartasToolStripMenuItem
             // 
@@ -89,28 +79,36 @@
             this.salirToolStripMenuItem.Text = "Salir";
             this.salirToolStripMenuItem.Click += new System.EventHandler(this.salirToolStripMenuItem_Click);
             // 
-            // gesti贸nToolStripMenuItem
+            // gesti髇ToolStripMenuItem
             // 
-            this.gesti贸nToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.gesti髇ToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.verStockToolStripMenuItem,
-            this.a帽adirStockToolStripMenuItem});
-            this.gesti贸nToolStripMenuItem.Name = "gesti贸nToolStripMenuItem";
-            this.gesti贸nToolStripMenuItem.Size = new System.Drawing.Size(73, 24);
-            this.gesti贸nToolStripMenuItem.Text = "Gesti贸n";
+            this.a馻dirStockToolStripMenuItem,
+            this.estadisticasStockToolStripMenuItem});
+            this.gesti髇ToolStripMenuItem.Name = "gesti髇ToolStripMenuItem";
+            this.gesti髇ToolStripMenuItem.Size = new System.Drawing.Size(73, 24);
+            this.gesti髇ToolStripMenuItem.Text = "Gesti髇";
             // 
             // verStockToolStripMenuItem
             // 
             this.verStockToolStripMenuItem.Name = "verStockToolStripMenuItem";
-            this.verStockToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
+            this.verStockToolStripMenuItem.Size = new System.Drawing.Size(214, 26);
             this.verStockToolStripMenuItem.Text = "Ver Stock";
             this.verStockToolStripMenuItem.Click += new System.EventHandler(this.verStockToolStripMenuItem_Click);
             // 
-            // a帽adirStockToolStripMenuItem
+            // a馻dirStockToolStripMenuItem
             // 
-            this.a帽adirStockToolStripMenuItem.Name = "a帽adirStockToolStripMenuItem";
-            this.a帽adirStockToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
-            this.a帽adirStockToolStripMenuItem.Text = "A帽adir Stock";
-            this.a帽adirStockToolStripMenuItem.Click += new System.EventHandler(this.a帽adirStockToolStripMenuItem_Click);
+            this.a馻dirStockToolStripMenuItem.Name = "a馻dirStockToolStripMenuItem";
+            this.a馻dirStockToolStripMenuItem.Size = new System.Drawing.Size(214, 26);
+            this.a馻dirStockToolStripMenuItem.Text = "A馻dir Stock";
+            this.a馻dirStockToolStripMenuItem.Click += new System.EventHandler(this.a馻dirStockToolStripMenuItem_Click);
+            // 
+            // estadisticasStockToolStripMenuItem
+            // 
+            this.estadisticasStockToolStripMenuItem.Name = "estadisticasStockToolStripMenuItem";
+            this.estadisticasStockToolStripMenuItem.Size = new System.Drawing.Size(214, 26);
+            this.estadisticasStockToolStripMenuItem.Text = "Estadisticas Stock";
+            this.estadisticasStockToolStripMenuItem.Click += new System.EventHandler(this.estadisticasStockToolStripMenuItem_Click);
             // 
             // economiaToolStripMenuItem
             // 
@@ -135,10 +133,26 @@
             // 
             // decksToolStripMenuItem
             // 
+            this.decksToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.misDecksToolStripMenuItem,
+            this.explorarDecksToolStripMenuItem});
             this.decksToolStripMenuItem.Name = "decksToolStripMenuItem";
             this.decksToolStripMenuItem.Size = new System.Drawing.Size(62, 24);
             this.decksToolStripMenuItem.Text = "Decks";
-            this.decksToolStripMenuItem.Click += new System.EventHandler(this.decksToolStripMenuItem_Click);
+            // 
+            // misDecksToolStripMenuItem
+            // 
+            this.misDecksToolStripMenuItem.Name = "misDecksToolStripMenuItem";
+            this.misDecksToolStripMenuItem.Size = new System.Drawing.Size(189, 26);
+            this.misDecksToolStripMenuItem.Text = "Mis decks";
+            this.misDecksToolStripMenuItem.Click += new System.EventHandler(this.misDecksToolStripMenuItem_Click);
+            // 
+            // explorarDecksToolStripMenuItem
+            // 
+            this.explorarDecksToolStripMenuItem.Name = "explorarDecksToolStripMenuItem";
+            this.explorarDecksToolStripMenuItem.Size = new System.Drawing.Size(189, 26);
+            this.explorarDecksToolStripMenuItem.Text = "Explorar decks";
+            this.explorarDecksToolStripMenuItem.Click += new System.EventHandler(this.explorarDecksToolStripMenuItem_Click);
             // 
             // FrmMain
             // 
@@ -159,23 +173,22 @@
             this.menu.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
-
-        #endregion
 
         private System.Windows.Forms.MenuStrip menu;
         private System.Windows.Forms.ToolStripMenuItem ajustesToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem testConexi贸nToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem testConexi髇ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem salirToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem gesti贸nToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem gesti髇ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem verStockToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem a帽adirStockToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem a馻dirStockToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem estadisticasStockToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem economiaToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem ingresosEstimadosToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem ingresosGanadosToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem carpetaDeCartasToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem decksToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem misDecksToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem explorarDecksToolStripMenuItem;
     }
 }
-

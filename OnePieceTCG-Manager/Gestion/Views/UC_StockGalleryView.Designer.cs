@@ -1,4 +1,4 @@
-﻿namespace OnePieceTCG_Manager.Gestion.Views
+namespace OnePieceTCG_Manager.Gestion.Views
 {
     partial class UC_StockGalleryView
     {
@@ -22,9 +22,10 @@
             this.flowPanel.AutoScroll = true;
             this.flowPanel.BackColor = System.Drawing.Color.White;
             this.flowPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.flowPanel.FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight;
             this.flowPanel.Location = new System.Drawing.Point(0, 0);
             this.flowPanel.Name = "flowPanel";
-            this.flowPanel.Padding = new System.Windows.Forms.Padding(10);
+            this.flowPanel.Padding = new System.Windows.Forms.Padding(14);
             this.flowPanel.Size = new System.Drawing.Size(800, 450);
             this.flowPanel.TabIndex = 0;
             this.flowPanel.WrapContents = true;
