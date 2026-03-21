@@ -1,0 +1,199 @@
+﻿using Newtonsoft.Json;
+using OnePieceTCG_Manager.Models;
+using OnePieceTCG_Manager.Properties;
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Net.Http;
+using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace OnePieceTCG_Manager.Services
+{
+    internal sealed class AppUpdateService
+    {
+        private static readonly HttpClient HttpClient = CreateHttpClient();
+
+        public async Task<UpdateCheckResult> CheckForUpdatesAsync()
+        {
+            Version currentVersion = GetCurrentVersion();
+            string manifestUrl = Settings.Default.update_manifest_url;
+
+            if (string.IsNullOrWhiteSpace(manifestUrl))
+                return UpdateCheckResult.NoUpdate(currentVersion);
+
+            try
+            {
+                string json = await HttpClient.GetStringAsync(manifestUrl).ConfigureAwait(false);
+                UpdateManifest manifest = JsonConvert.DeserializeObject<UpdateManifest>(json);
+
+                if (manifest == null || string.IsNullOrWhiteSpace(manifest.Version))
+                {
+                    return new UpdateCheckResult
+                    {
+                        CurrentVersion = currentVersion,
+                        IsUpdateAvailable = false,
+                        ErrorMessage = "No se pudo interpretar el manifiesto de actualización."
+                    };
+                }
+
+                Version latestVersion;
+                if (!Version.TryParse(manifest.Version, out latestVersion))
+                {
+                    return new UpdateCheckResult
+                    {
+                        CurrentVersion = currentVersion,
+                        IsUpdateAvailable = false,
+                        ErrorMessage = "La versión remota no tiene un formato válido."
+                    };
+                }
+
+                return new UpdateCheckResult
+                {
+                    CurrentVersion = currentVersion,
+                    LatestVersion = latestVersion,
+                    Manifest = manifest,
+                    IsUpdateAvailable = latestVersion > currentVersion
+                };
+            }
+            catch (Exception ex)
+            {
+                return new UpdateCheckResult
+                {
+                    CurrentVersion = currentVersion,
+                    IsUpdateAvailable = false,
+                    ErrorMessage = ex.Message
+                };
+            }
+        }
+
+        public async Task<DownloadedUpdatePackage> DownloadUpdateAsync(UpdateManifest manifest)
+        {
+            if (manifest == null)
+                throw new ArgumentNullException("manifest");
+
+            if (string.IsNullOrWhiteSpace(manifest.DownloadUrl))
+                throw new InvalidOperationException("La actualización no incluye una URL de descarga.");
+
+            string updateRoot = Path.Combine(Path.GetTempPath(), "OnePieceTCG-Manager", "updates", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(updateRoot);
+
+            string packagePath = Path.Combine(updateRoot, "OnePieceTCG-Manager.zip");
+            string scriptPath = Path.Combine(updateRoot, "apply-update.ps1");
+
+            using (HttpResponseMessage response = await HttpClient.GetAsync(manifest.DownloadUrl).ConfigureAwait(false))
+            {
+                response.EnsureSuccessStatusCode();
+
+                using (Stream remoteStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
+                using (FileStream localStream = new FileStream(packagePath, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    await remoteStream.CopyToAsync(localStream).ConfigureAwait(false);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(manifest.Sha256))
+                ValidateChecksum(packagePath, manifest.Sha256);
+
+            File.WriteAllText(scriptPath, BuildUpdaterScript(), Encoding.UTF8);
+
+            return new DownloadedUpdatePackage
+            {
+                PackagePath = packagePath,
+                ScriptPath = scriptPath
+            };
+        }
+
+        public void LaunchUpdaterAndExit(DownloadedUpdatePackage package)
+        {
+            if (package == null)
+                throw new ArgumentNullException("package");
+
+            string executablePath = Application.ExecutablePath;
+            string installDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            string executableName = Path.GetFileName(executablePath);
+
+            ProcessStartInfo startInfo = new ProcessStartInfo
+            {
+                FileName = "powershell.exe",
+                Arguments = string.Format(
+                    "-NoProfile -ExecutionPolicy Bypass -File \"{0}\" -ParentProcessId {1} -ZipPath \"{2}\" -InstallDir \"{3}\" -ExeName \"{4}\"",
+                    package.ScriptPath,
+                    Process.GetCurrentProcess().Id,
+                    package.PackagePath,
+                    installDirectory,
+                    executableName),
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                WorkingDirectory = installDirectory
+            };
+
+            Process.Start(startInfo);
+        }
+
+        private static HttpClient CreateHttpClient()
+        {
+            HttpClient client = new HttpClient();
+            client.Timeout = TimeSpan.FromSeconds(20);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("OnePieceTCG-Manager-Updater/1.0");
+            return client;
+        }
+
+        private static Version GetCurrentVersion()
+        {
+            return Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0, 0, 0);
+        }
+
+        private static void ValidateChecksum(string filePath, string expectedHash)
+        {
+            string normalizedExpected = expectedHash.Replace("-", string.Empty).Trim().ToUpperInvariant();
+            using (SHA256 sha256 = SHA256.Create())
+            using (FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                byte[] hash = sha256.ComputeHash(stream);
+                string actualHash = BitConverter.ToString(hash).Replace("-", string.Empty).ToUpperInvariant();
+                if (!string.Equals(actualHash, normalizedExpected, StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException("La firma SHA256 del paquete no coincide con el manifiesto publicado.");
+            }
+        }
+
+        private static string BuildUpdaterScript()
+        {
+            return @"param(
+    [int]$ParentProcessId,
+    [string]$ZipPath,
+    [string]$InstallDir,
+    [string]$ExeName
+)
+
+$ErrorActionPreference = 'Stop'
+
+while (Get-Process -Id $ParentProcessId -ErrorAction SilentlyContinue) {
+    Start-Sleep -Milliseconds 500
+}
+
+$stagingDir = Join-Path ([System.IO.Path]::GetTempPath()) ('OPTCG-Manager-' + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $stagingDir -Force | Out-Null
+Expand-Archive -Path $ZipPath -DestinationPath $stagingDir -Force
+
+$exe = Get-ChildItem -Path $stagingDir -Filter $ExeName -Recurse | Select-Object -First 1
+if (-not $exe) {
+    throw 'No se encontró el ejecutable dentro del paquete descargado.'
+}
+
+$packageRoot = Split-Path -Path $exe.FullName -Parent
+New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
+Copy-Item -Path (Join-Path $packageRoot '*') -Destination $InstallDir -Recurse -Force
+Start-Process -FilePath (Join-Path $InstallDir $ExeName)
+
+Start-Sleep -Seconds 2
+Remove-Item -Path $stagingDir -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -Path $ZipPath -Force -ErrorAction SilentlyContinue
+Remove-Item -Path $PSCommandPath -Force -ErrorAction SilentlyContinue
+";
+        }
+    }
+}

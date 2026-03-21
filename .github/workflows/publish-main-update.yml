@@ -1,0 +1,100 @@
+﻿name: publish-main-update
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - update/version.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Restore packages
+        run: nuget restore OnePieceTCG-Manager.sln
+
+      - name: Build release
+        run: msbuild OnePieceTCG-Manager.sln /t:Build /p:Configuration=Release
+
+      - name: Package application
+        shell: pwsh
+        run: |
+          $packageDir = Join-Path $env:GITHUB_WORKSPACE 'dist/package'
+          $releaseDir = Join-Path $env:GITHUB_WORKSPACE 'OnePieceTCG-Manager/bin/Release'
+          $zipPath = Join-Path $env:GITHUB_WORKSPACE 'dist/OnePieceTCG-Manager.zip'
+
+          if (Test-Path $packageDir) {
+            Remove-Item $packageDir -Recurse -Force
+          }
+
+          if (Test-Path $zipPath) {
+            Remove-Item $zipPath -Force
+          }
+
+          New-Item -ItemType Directory -Path $packageDir -Force | Out-Null
+          Copy-Item -Path (Join-Path $releaseDir '*') -Destination $packageDir -Recurse -Force
+          Compress-Archive -Path (Join-Path $packageDir '*') -DestinationPath $zipPath -CompressionLevel Optimal
+
+      - name: Generate update manifest
+        shell: pwsh
+        run: |
+          $assemblyInfoPath = Join-Path $env:GITHUB_WORKSPACE 'OnePieceTCG-Manager/Properties/AssemblyInfo.cs'
+          $assemblyInfo = Get-Content $assemblyInfoPath -Raw
+          $version = [regex]::Match($assemblyInfo, 'AssemblyFileVersion\("([0-9\.]+)"\)').Groups[1].Value
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            throw 'No se pudo leer AssemblyFileVersion desde AssemblyInfo.cs'
+          }
+
+          $zipPath = Join-Path $env:GITHUB_WORKSPACE 'dist/OnePieceTCG-Manager.zip'
+          $hash = (Get-FileHash -Path $zipPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          $publishedAt = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+
+          $manifest = [ordered]@{
+            version = $version
+            channel = 'main'
+            publishedAt = $publishedAt
+            downloadUrl = 'https://github.com/QueroXD/OnePieceTCG-Manager/releases/download/main-latest/OnePieceTCG-Manager.zip'
+            releaseNotesUrl = 'https://github.com/QueroXD/OnePieceTCG-Manager/releases/tag/main-latest'
+            sha256 = $hash
+            mandatory = $false
+          } | ConvertTo-Json
+
+          $manifestPath = Join-Path $env:GITHUB_WORKSPACE 'update/version.json'
+          Set-Content -Path $manifestPath -Value $manifest -Encoding UTF8
+
+      - name: Commit manifest to main
+        shell: pwsh
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add update/version.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'chore: refresh update manifest [skip ci]'
+          git push
+
+      - name: Publish rolling release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: main-latest
+          name: Main latest
+          prerelease: true
+          make_latest: false
+          fail_on_unmatched_files: true
+          files: dist/OnePieceTCG-Manager.zip

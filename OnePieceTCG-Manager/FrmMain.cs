@@ -1,8 +1,12 @@
-using OnePieceTCG_Manager.Decks;
+﻿using OnePieceTCG_Manager.Decks;
 using OnePieceTCG_Manager.Gestion;
+using OnePieceTCG_Manager.Models;
+using OnePieceTCG_Manager.Services;
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace OnePieceTCG_Manager
@@ -11,7 +15,9 @@ namespace OnePieceTCG_Manager
     {
         private readonly string _codUsu;
         private readonly string _userName;
+        private readonly AppUpdateService _appUpdateService = new AppUpdateService();
         private DiscordRPC.DiscordRpcClient rpc;
+        private bool _updateCheckStarted;
 
         public FrmMain(string codUsu, string userName)
         {
@@ -20,14 +26,20 @@ namespace OnePieceTCG_Manager
             _userName = userName;
         }
 
-        private void FrmMain_Load(object sender, EventArgs e)
+        private async void FrmMain_Load(object sender, EventArgs e)
         {
-            Text = $"OPTCG Manager - {_userName}";
+            Text = string.Format("OPTCG Manager v{0} - {1}", GetCurrentVersion(), _userName);
             economiaToolStripMenuItem.Visible = false;
             InitDiscordRPC();
+
+            if (!_updateCheckStarted)
+            {
+                _updateCheckStarted = true;
+                await CheckForUpdatesAsync();
+            }
         }
 
-        private void a�adirStockToolStripMenuItem_Click(object sender, EventArgs e)
+        private void añadirStockToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var frm = Application.OpenForms.OfType<FrmAddStock>().FirstOrDefault();
             if (frm == null)
@@ -40,7 +52,7 @@ namespace OnePieceTCG_Manager
                 frm.BringToFront();
             }
 
-            UpdateRPC("A�adiendo stock");
+            UpdateRPC("Añadiendo stock");
         }
 
         private void verStockToolStripMenuItem_Click(object sender, EventArgs e)
@@ -124,7 +136,7 @@ namespace OnePieceTCG_Manager
                 rpc.Initialize();
                 rpc.SetPresence(new DiscordRPC.RichPresence
                 {
-                    Details = "En el men� principal",
+                    Details = "En el menú principal",
                     State = "OPTCG Manager - By Quero",
                     Timestamps = DiscordRPC.Timestamps.Now
                 });
@@ -140,7 +152,55 @@ namespace OnePieceTCG_Manager
             if (rpc != null && rpc.IsInitialized)
                 rpc.UpdateDetails(details);
         }
+
+        private async Task CheckForUpdatesAsync()
+        {
+            UpdateCheckResult result = await _appUpdateService.CheckForUpdatesAsync();
+            if (!result.IsUpdateAvailable || result.Manifest == null)
+                return;
+
+            string message = string.Format(
+                "Hay una nueva versión disponible.\n\nActual: {0}\nÚltima en main: {1}\n\n¿Quieres descargarla e instalarla ahora?",
+                result.CurrentVersion,
+                result.LatestVersion);
+
+            DialogResult confirmation = MessageBox.Show(
+                this,
+                message,
+                "Actualización disponible",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Information);
+
+            if (confirmation != DialogResult.Yes)
+                return;
+
+            try
+            {
+                UseWaitCursor = true;
+                Enabled = false;
+                DownloadedUpdatePackage package = await _appUpdateService.DownloadUpdateAsync(result.Manifest);
+                _appUpdateService.LaunchUpdaterAndExit(package);
+                Application.Exit();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    this,
+                    "No se pudo completar la actualización automática.\n\n" + ex.Message,
+                    "Error de actualización",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+            finally
+            {
+                Enabled = true;
+                UseWaitCursor = false;
+            }
+        }
+
+        private static Version GetCurrentVersion()
+        {
+            return Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0, 0, 0);
+        }
     }
 }
-
-

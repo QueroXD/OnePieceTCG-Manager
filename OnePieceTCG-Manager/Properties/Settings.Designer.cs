@@ -40,5 +40,14 @@ namespace OnePieceTCG_Manager.Properties {
                 return ((string)(this["card_api"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://raw.githubusercontent.com/QueroXD/OnePieceTCG-Manager/main/update/version.json")]
+        public string update_manifest_url {
+            get {
+                return ((string)(this["update_manifest_url"]));
+            }
+        }
     }
 }
