@@ -92,22 +92,23 @@ namespace OnePieceTCG_Manager
             // verStockToolStripMenuItem
             // 
             this.verStockToolStripMenuItem.Name = "verStockToolStripMenuItem";
-            this.verStockToolStripMenuItem.Size = new System.Drawing.Size(214, 26);
+            this.verStockToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
             this.verStockToolStripMenuItem.Text = "Ver Stock";
             this.verStockToolStripMenuItem.Click += new System.EventHandler(this.verStockToolStripMenuItem_Click);
             // 
             // añadirStockToolStripMenuItem
             // 
             this.añadirStockToolStripMenuItem.Name = "añadirStockToolStripMenuItem";
-            this.añadirStockToolStripMenuItem.Size = new System.Drawing.Size(214, 26);
+            this.añadirStockToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
             this.añadirStockToolStripMenuItem.Text = "Añadir Stock";
             this.añadirStockToolStripMenuItem.Click += new System.EventHandler(this.añadirStockToolStripMenuItem_Click);
             // 
             // estadisticasStockToolStripMenuItem
             // 
             this.estadisticasStockToolStripMenuItem.Name = "estadisticasStockToolStripMenuItem";
-            this.estadisticasStockToolStripMenuItem.Size = new System.Drawing.Size(214, 26);
+            this.estadisticasStockToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
             this.estadisticasStockToolStripMenuItem.Text = "Estadisticas Stock";
+            this.estadisticasStockToolStripMenuItem.Visible = false;
             this.estadisticasStockToolStripMenuItem.Click += new System.EventHandler(this.estadisticasStockToolStripMenuItem_Click);
             // 
             // economiaToolStripMenuItem
@@ -143,14 +144,14 @@ namespace OnePieceTCG_Manager
             // misDecksToolStripMenuItem
             // 
             this.misDecksToolStripMenuItem.Name = "misDecksToolStripMenuItem";
-            this.misDecksToolStripMenuItem.Size = new System.Drawing.Size(189, 26);
+            this.misDecksToolStripMenuItem.Size = new System.Drawing.Size(188, 26);
             this.misDecksToolStripMenuItem.Text = "Mis decks";
             this.misDecksToolStripMenuItem.Click += new System.EventHandler(this.misDecksToolStripMenuItem_Click);
             // 
             // explorarDecksToolStripMenuItem
             // 
             this.explorarDecksToolStripMenuItem.Name = "explorarDecksToolStripMenuItem";
-            this.explorarDecksToolStripMenuItem.Size = new System.Drawing.Size(189, 26);
+            this.explorarDecksToolStripMenuItem.Size = new System.Drawing.Size(188, 26);
             this.explorarDecksToolStripMenuItem.Text = "Explorar decks";
             this.explorarDecksToolStripMenuItem.Click += new System.EventHandler(this.explorarDecksToolStripMenuItem_Click);
             // 
@@ -173,6 +174,7 @@ namespace OnePieceTCG_Manager
             this.menu.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
+
         }
 
         private System.Windows.Forms.MenuStrip menu;
