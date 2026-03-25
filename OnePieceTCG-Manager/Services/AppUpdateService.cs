@@ -123,23 +123,27 @@ namespace OnePieceTCG_Manager.Services
                 throw new ArgumentNullException("package");
 
             string executablePath = Application.ExecutablePath;
-            string installDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            string installDirectory = NormalizeDirectoryPath(AppDomain.CurrentDomain.BaseDirectory);
             string executableName = Path.GetFileName(executablePath);
             string launcherLogPath = GetLauncherLogPath();
 
             Directory.CreateDirectory(GetLogDirectoryPath());
             File.AppendAllText(launcherLogPath, string.Format("{0:s} Lanzando actualizador. InstallDir={1}; Script={2}; Zip={3}{4}", DateTime.Now, installDirectory, package.ScriptPath, package.PackagePath, Environment.NewLine));
 
+            string arguments = string.Format(
+                "-NoLogo -ExecutionPolicy Bypass -File {0} -ParentProcessId {1} -ZipPath {2} -InstallDir {3} -ExeName {4}",
+                QuoteArgument(package.ScriptPath),
+                Process.GetCurrentProcess().Id,
+                QuoteArgument(package.PackagePath),
+                QuoteArgument(installDirectory),
+                QuoteArgument(executableName));
+
+            File.AppendAllText(launcherLogPath, string.Format("{0:s} Arguments={1}{2}", DateTime.Now, arguments, Environment.NewLine));
+
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
                 FileName = "powershell.exe",
-                Arguments = string.Format(
-                    "-NoLogo -ExecutionPolicy Bypass -File \"{0}\" -ParentProcessId {1} -ZipPath \"{2}\" -InstallDir \"{3}\" -ExeName \"{4}\"",
-                    package.ScriptPath,
-                    Process.GetCurrentProcess().Id,
-                    package.PackagePath,
-                    installDirectory,
-                    executableName),
+                Arguments = arguments,
                 UseShellExecute = true,
                 WindowStyle = ProcessWindowStyle.Normal,
                 WorkingDirectory = installDirectory
@@ -178,6 +182,23 @@ namespace OnePieceTCG_Manager.Services
         private static string GetLogDirectoryPath()
         {
             return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OnePieceTCG-Manager", "Logs");
+        }
+
+        private static string NormalizeDirectoryPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return path;
+
+            return path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        }
+
+        private static string QuoteArgument(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return "\"\"";
+
+            string escaped = value.Replace("\\", "\\\\").Replace("\"", "\\\"");
+            return string.Format("\"{0}\"", escaped);
         }
 
         private static string BuildUpdaterScript()
