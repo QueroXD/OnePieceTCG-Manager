@@ -210,7 +210,7 @@ namespace OnePieceTCG_Manager
 
         private static Version GetCurrentVersion()
         {
-            return Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0, 0);
+            return Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0, 0, 0);
         }
     }
 }
