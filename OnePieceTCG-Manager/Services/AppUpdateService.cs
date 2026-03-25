@@ -107,6 +107,16 @@ namespace OnePieceTCG_Manager.Services
             };
         }
 
+        public string GetUpdaterLogPath()
+        {
+            return Path.Combine(GetLogDirectoryPath(), "updater.log");
+        }
+
+        public string GetLauncherLogPath()
+        {
+            return Path.Combine(GetLogDirectoryPath(), "launcher.log");
+        }
+
         public void LaunchUpdaterAndExit(DownloadedUpdatePackage package)
         {
             if (package == null)
@@ -115,23 +125,28 @@ namespace OnePieceTCG_Manager.Services
             string executablePath = Application.ExecutablePath;
             string installDirectory = AppDomain.CurrentDomain.BaseDirectory;
             string executableName = Path.GetFileName(executablePath);
+            string launcherLogPath = GetLauncherLogPath();
+
+            Directory.CreateDirectory(GetLogDirectoryPath());
+            File.AppendAllText(launcherLogPath, string.Format("{0:s} Lanzando actualizador. InstallDir={1}; Script={2}; Zip={3}{4}", DateTime.Now, installDirectory, package.ScriptPath, package.PackagePath, Environment.NewLine));
 
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
                 FileName = "powershell.exe",
                 Arguments = string.Format(
-                    "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{0}\" -ParentProcessId {1} -ZipPath \"{2}\" -InstallDir \"{3}\" -ExeName \"{4}\"",
+                    "-NoLogo -ExecutionPolicy Bypass -File \"{0}\" -ParentProcessId {1} -ZipPath \"{2}\" -InstallDir \"{3}\" -ExeName \"{4}\"",
                     package.ScriptPath,
                     Process.GetCurrentProcess().Id,
                     package.PackagePath,
                     installDirectory,
                     executableName),
-                CreateNoWindow = true,
-                UseShellExecute = false,
+                UseShellExecute = true,
+                WindowStyle = ProcessWindowStyle.Normal,
                 WorkingDirectory = installDirectory
             };
 
-            Process.Start(startInfo);
+            Process process = Process.Start(startInfo);
+            File.AppendAllText(launcherLogPath, string.Format("{0:s} Actualizador lanzado. PID={1}{2}", DateTime.Now, process != null ? process.Id.ToString() : "null", Environment.NewLine));
         }
 
         private static HttpClient CreateHttpClient()
@@ -160,6 +175,11 @@ namespace OnePieceTCG_Manager.Services
             }
         }
 
+        private static string GetLogDirectoryPath()
+        {
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OnePieceTCG-Manager", "Logs");
+        }
+
         private static string BuildUpdaterScript()
         {
             return @"param(
@@ -176,11 +196,14 @@ New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 
 function Write-Log {
     param([string]$Message)
-    Add-Content -Path $logPath -Value ((Get-Date).ToString('s') + ' ' + $Message)
+    $line = (Get-Date).ToString('s') + ' ' + $Message
+    Add-Content -Path $logPath -Value $line
+    Write-Host $line
 }
 
 try {
     Write-Log ('Inicio de actualización. Destino=' + $InstallDir + '; Zip=' + $ZipPath)
+    Write-Host 'Esperando a que se cierre la aplicación...'
 
     while (Get-Process -Id $ParentProcessId -ErrorAction SilentlyContinue) {
         Start-Sleep -Milliseconds 500
@@ -190,6 +213,7 @@ try {
     New-Item -ItemType Directory -Path $stagingDir -Force | Out-Null
     Expand-Archive -Path $ZipPath -DestinationPath $stagingDir -Force
     Write-Log ('ZIP expandido en ' + $stagingDir)
+    Write-Host 'Copiando nueva versión...'
 
     $exe = Get-ChildItem -Path $stagingDir -Filter $ExeName -Recurse | Select-Object -First 1
     if (-not $exe) {
@@ -199,7 +223,6 @@ try {
     $packageRoot = Split-Path -Path $exe.FullName -Parent
     New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
 
-    $robocopyLog = Join-Path $logDir 'robocopy.log'
     $robocopyArgs = @($packageRoot, $InstallDir, '/E', '/R:3', '/W:1', '/NFL', '/NDL', '/NJH', '/NJS', '/NP')
     $robocopy = Start-Process -FilePath 'robocopy.exe' -ArgumentList $robocopyArgs -Wait -PassThru -NoNewWindow
     Write-Log ('Robocopy exit code: ' + $robocopy.ExitCode)
@@ -214,6 +237,7 @@ try {
     }
 
     Write-Log ('Reinicio de aplicación: ' + $targetExe)
+    Write-Host 'Abriendo la aplicación actualizada...'
     Start-Process -FilePath $targetExe
     Start-Sleep -Seconds 2
 
@@ -221,9 +245,17 @@ try {
     Remove-Item -Path $ZipPath -Force -ErrorAction SilentlyContinue
     Remove-Item -Path $PSCommandPath -Force -ErrorAction SilentlyContinue
     Write-Log 'Actualización completada.'
+    Write-Host 'Actualización completada.'
+    Start-Sleep -Seconds 3
 }
 catch {
     Write-Log ('ERROR: ' + $_.Exception.Message)
+    Write-Host ''
+    Write-Host 'La actualización ha fallado.' -ForegroundColor Red
+    Write-Host $_.Exception.Message -ForegroundColor Red
+    Write-Host ''
+    Write-Host ('Revisa el log en: ' + $logPath)
+    Read-Host 'Pulsa Enter para cerrar'
     throw
 }
 ";

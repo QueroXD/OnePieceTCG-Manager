@@ -179,6 +179,16 @@ namespace OnePieceTCG_Manager
                 UseWaitCursor = true;
                 Enabled = false;
                 DownloadedUpdatePackage package = await _appUpdateService.DownloadUpdateAsync(result.Manifest);
+
+                MessageBox.Show(
+                    this,
+                    "La aplicación se va a cerrar para instalar la actualización.\n\nAhora se abrirá una ventana del actualizador con el progreso.\nSi falla, puedes revisar estos logs:\n\n" +
+                    _appUpdateService.GetLauncherLogPath() + "\n" +
+                    _appUpdateService.GetUpdaterLogPath(),
+                    "Instalando actualización",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+
                 _appUpdateService.LaunchUpdaterAndExit(package);
                 Application.Exit();
             }
@@ -200,7 +210,7 @@ namespace OnePieceTCG_Manager
 
         private static Version GetCurrentVersion()
         {
-            return Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0, 0, 0);
+            return Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0, 0);
         }
     }
 }
