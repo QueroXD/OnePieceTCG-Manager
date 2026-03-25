@@ -1,9 +1,9 @@
 {
-  "version": "1.0.2",
+  "version": "1.0.3",
   "channel": "main",
-  "publishedAt": "2026-03-25T19:14:58Z",
+  "publishedAt": "2026-03-25T19:34:24Z",
   "downloadUrl": "https://github.com/QueroXD/OnePieceTCG-Manager/releases/download/main-latest/OnePieceTCG-Manager.zip",
   "releaseNotesUrl": "https://github.com/QueroXD/OnePieceTCG-Manager/releases/tag/main-latest",
-  "sha256": "5f399f65a62677ce254d6eefd4377ff254e2fbdc1963bebf4d947f06e65ac165",
+  "sha256": "74f473784e73442080851bee12e362fcfc56dd0343aae71da6551ad44c6e2455",
   "mandatory": false
 }
