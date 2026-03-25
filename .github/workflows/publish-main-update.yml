@@ -39,6 +39,9 @@ jobs:
           $packageDir = Join-Path $env:GITHUB_WORKSPACE 'dist/package'
           $releaseDir = Join-Path $env:GITHUB_WORKSPACE 'OnePieceTCG-Manager/bin/Release'
           $zipPath = Join-Path $env:GITHUB_WORKSPACE 'dist/OnePieceTCG-Manager.zip'
+          $assemblyInfoPath = Join-Path $env:GITHUB_WORKSPACE 'OnePieceTCG-Manager/Properties/AssemblyInfo.cs'
+          $assemblyInfo = Get-Content $assemblyInfoPath -Raw
+          $version = [regex]::Match($assemblyInfo, 'AssemblyFileVersion\("([0-9\.]+)"\)').Groups[1].Value
 
           if (Test-Path $packageDir) {
             Remove-Item $packageDir -Recurse -Force
@@ -50,6 +53,13 @@ jobs:
 
           New-Item -ItemType Directory -Path $packageDir -Force | Out-Null
           Copy-Item -Path (Join-Path $releaseDir '*') -Destination $packageDir -Recurse -Force
+
+          @(
+            "version=$version"
+            "commit=$env:GITHUB_SHA"
+            "builtAt=$((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))"
+          ) | Set-Content -Path (Join-Path $packageDir 'version.txt') -Encoding UTF8
+
           Compress-Archive -Path (Join-Path $packageDir '*') -DestinationPath $zipPath -CompressionLevel Optimal
 
       - name: Generate update manifest
@@ -99,4 +109,3 @@ jobs:
           fail_on_unmatched_files: true
           overwrite_files: true
           files: dist/OnePieceTCG-Manager.zip
-
