@@ -120,7 +120,7 @@ namespace OnePieceTCG_Manager.Services
             {
                 FileName = "powershell.exe",
                 Arguments = string.Format(
-                    "-NoProfile -ExecutionPolicy Bypass -File \"{0}\" -ParentProcessId {1} -ZipPath \"{2}\" -InstallDir \"{3}\" -ExeName \"{4}\"",
+                    "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{0}\" -ParentProcessId {1} -ZipPath \"{2}\" -InstallDir \"{3}\" -ExeName \"{4}\"",
                     package.ScriptPath,
                     Process.GetCurrentProcess().Id,
                     package.PackagePath,
@@ -170,29 +170,62 @@ namespace OnePieceTCG_Manager.Services
 )
 
 $ErrorActionPreference = 'Stop'
+$logDir = Join-Path $env:LOCALAPPDATA 'OnePieceTCG-Manager\Logs'
+$logPath = Join-Path $logDir 'updater.log'
+New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 
-while (Get-Process -Id $ParentProcessId -ErrorAction SilentlyContinue) {
-    Start-Sleep -Milliseconds 500
+function Write-Log {
+    param([string]$Message)
+    Add-Content -Path $logPath -Value ((Get-Date).ToString('s') + ' ' + $Message)
 }
 
-$stagingDir = Join-Path ([System.IO.Path]::GetTempPath()) ('OPTCG-Manager-' + [guid]::NewGuid().ToString('N'))
-New-Item -ItemType Directory -Path $stagingDir -Force | Out-Null
-Expand-Archive -Path $ZipPath -DestinationPath $stagingDir -Force
+try {
+    Write-Log ('Inicio de actualización. Destino=' + $InstallDir + '; Zip=' + $ZipPath)
 
-$exe = Get-ChildItem -Path $stagingDir -Filter $ExeName -Recurse | Select-Object -First 1
-if (-not $exe) {
-    throw 'No se encontró el ejecutable dentro del paquete descargado.'
+    while (Get-Process -Id $ParentProcessId -ErrorAction SilentlyContinue) {
+        Start-Sleep -Milliseconds 500
+    }
+
+    $stagingDir = Join-Path ([System.IO.Path]::GetTempPath()) ('OPTCG-Manager-' + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path $stagingDir -Force | Out-Null
+    Expand-Archive -Path $ZipPath -DestinationPath $stagingDir -Force
+    Write-Log ('ZIP expandido en ' + $stagingDir)
+
+    $exe = Get-ChildItem -Path $stagingDir -Filter $ExeName -Recurse | Select-Object -First 1
+    if (-not $exe) {
+        throw 'No se encontró el ejecutable dentro del paquete descargado.'
+    }
+
+    $packageRoot = Split-Path -Path $exe.FullName -Parent
+    New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
+
+    $robocopyLog = Join-Path $logDir 'robocopy.log'
+    $robocopyArgs = @($packageRoot, $InstallDir, '/E', '/R:3', '/W:1', '/NFL', '/NDL', '/NJH', '/NJS', '/NP')
+    $robocopy = Start-Process -FilePath 'robocopy.exe' -ArgumentList $robocopyArgs -Wait -PassThru -NoNewWindow
+    Write-Log ('Robocopy exit code: ' + $robocopy.ExitCode)
+
+    if ($robocopy.ExitCode -ge 8) {
+        throw ('Robocopy devolvió un código de error: ' + $robocopy.ExitCode)
+    }
+
+    $targetExe = Join-Path $InstallDir $ExeName
+    if (-not (Test-Path $targetExe)) {
+        throw ('No se encontró el ejecutable actualizado en ' + $targetExe)
+    }
+
+    Write-Log ('Reinicio de aplicación: ' + $targetExe)
+    Start-Process -FilePath $targetExe
+    Start-Sleep -Seconds 2
+
+    Remove-Item -Path $stagingDir -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item -Path $ZipPath -Force -ErrorAction SilentlyContinue
+    Remove-Item -Path $PSCommandPath -Force -ErrorAction SilentlyContinue
+    Write-Log 'Actualización completada.'
 }
-
-$packageRoot = Split-Path -Path $exe.FullName -Parent
-New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
-Copy-Item -Path (Join-Path $packageRoot '*') -Destination $InstallDir -Recurse -Force
-Start-Process -FilePath (Join-Path $InstallDir $ExeName)
-
-Start-Sleep -Seconds 2
-Remove-Item -Path $stagingDir -Recurse -Force -ErrorAction SilentlyContinue
-Remove-Item -Path $ZipPath -Force -ErrorAction SilentlyContinue
-Remove-Item -Path $PSCommandPath -Force -ErrorAction SilentlyContinue
+catch {
+    Write-Log ('ERROR: ' + $_.Exception.Message)
+    throw
+}
 ";
         }
     }
