@@ -222,6 +222,26 @@ function Write-Log {
     Write-Host $line
 }
 
+function Copy-DirectoryContent {
+    param(
+        [string]$SourceDir,
+        [string]$TargetDir
+    )
+
+    Get-ChildItem -Path $SourceDir -Force | ForEach-Object {
+        $destination = Join-Path $TargetDir $_.Name
+
+        if ($_.PSIsContainer) {
+            New-Item -ItemType Directory -Path $destination -Force | Out-Null
+            Copy-DirectoryContent -SourceDir $_.FullName -TargetDir $destination
+        }
+        else {
+            Copy-Item -Path $_.FullName -Destination $destination -Force
+            Write-Log ('Copiado: ' + $_.Name)
+        }
+    }
+}
+
 try {
     Write-Log ('Inicio de actualización. Destino=' + $InstallDir + '; Zip=' + $ZipPath)
     Write-Host 'Esperando a que se cierre la aplicación...'
@@ -242,15 +262,17 @@ try {
     }
 
     $packageRoot = Split-Path -Path $exe.FullName -Parent
-    New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
-
-    $robocopyArgs = @($packageRoot, $InstallDir, '/E', '/R:3', '/W:1', '/NFL', '/NDL', '/NJH', '/NJS', '/NP')
-    $robocopy = Start-Process -FilePath 'robocopy.exe' -ArgumentList $robocopyArgs -Wait -PassThru -NoNewWindow
-    Write-Log ('Robocopy exit code: ' + $robocopy.ExitCode)
-
-    if ($robocopy.ExitCode -ge 8) {
-        throw ('Robocopy devolvió un código de error: ' + $robocopy.ExitCode)
+    $versionFile = Join-Path $packageRoot 'version.txt'
+    if (Test-Path $versionFile) {
+        Write-Log ('Contenido version.txt: ' + ((Get-Content $versionFile -Raw).Trim()))
     }
+    else {
+        Write-Log 'El paquete descargado no incluye version.txt'
+    }
+
+    New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
+    Copy-DirectoryContent -SourceDir $packageRoot -TargetDir $InstallDir
+    Write-Log 'Copia completada.'
 
     $targetExe = Join-Path $InstallDir $ExeName
     if (-not (Test-Path $targetExe)) {
@@ -283,4 +305,3 @@ catch {
         }
     }
 }
-
